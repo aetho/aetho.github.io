@@ -1,5 +1,6 @@
 import "./style.css";
 import * as THREE from "three";
+import { MazeGenerator } from "./Maze";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 // Scene init
@@ -34,20 +35,23 @@ directionalLight.position.set(0, 3, 0);
 directionalLight.rotation.set(50, -30, 0);
 scene.add(directionalLight);
 
-// Add cube
-const geometry = new THREE.BoxGeometry(1, 1, 1);
-const material = new THREE.MeshLambertMaterial();
-const cube = new THREE.Mesh(geometry, material);
-cube.position.setZ(0);
-scene.add(cube);
+// Generate Maze
+const mazeGenerator = new MazeGenerator(25, 25);
+const mazeVertices = mazeGenerator.vertices;
+
+const sphGeo = new THREE.SphereGeometry(0.1);
+const sphMat = new THREE.MeshLambertMaterial();
+
+for (let n = 0; n < mazeVertices.length; n++) {
+	const sphere = new THREE.Mesh(sphGeo, sphMat);
+	sphere.position.set(...mazeVertices[n].toArray());
+	scene.add(sphere);
+}
 
 // draw loop
 function animate() {
 	requestAnimationFrame(animate);
 	controls.update();
-
-	cube.rotation.x += 0.01;
-	cube.rotation.y += 0.01;
 	renderer.render(scene, camera);
 }
 animate();
