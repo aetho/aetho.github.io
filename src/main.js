@@ -36,14 +36,13 @@ directionalLight.rotation.set(50, -30, 0);
 scene.add(directionalLight);
 
 // Generate Maze
-const mazeGenerator = new MazeGenerator(25, 25);
+const mazeGenerator = new MazeGenerator(30, 30);
 const mazeVertices = mazeGenerator.vertices;
 const mazeCells = mazeGenerator.cells;
 
+// Draw vertices
 const sphGeo = new THREE.SphereGeometry(0.1);
 const sphMat = new THREE.MeshLambertMaterial();
-
-// Draw vertices
 for (let n = 0; n < mazeVertices.length; n++) {
 	const sphere = new THREE.Mesh(sphGeo, sphMat);
 	sphere.position.set(...mazeVertices[n].toArray());
