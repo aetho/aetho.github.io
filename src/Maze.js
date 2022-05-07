@@ -22,7 +22,7 @@ class Cell {
 		this.#i = i;
 		this.#j = j;
 		this.#vertices = vertices;
-		this.adj = [true, true, true, true];
+		this.adj = [true, true, true, true]; // top, right, bot, left
 	}
 }
 
@@ -53,9 +53,9 @@ class MazeGenerator {
 		for (let j = 0; j < this.mapHeight; j++) {
 			for (let i = 0; i < this.mapWidth; i++) {
 				const cellVertices = [];
-				cellVertices.push(this.vertices[(j + 1) * (this.mapWidth + 1) + i]); // top left, (i,j)
-				cellVertices.push(this.vertices[(j + 1) * (this.mapWidth + 1) + i + 1]); // top right, (i,j)
-				cellVertices.push(this.vertices[j * (this.mapWidth + 1) + i + 1]); // bot right, (i,j)
+				cellVertices.push(this.vertices[(j + 1) * (this.mapWidth + 1) + i]); // top left, (i,j+1)
+				cellVertices.push(this.vertices[(j + 1) * (this.mapWidth + 1) + i + 1]); // top right, (i+1,j+1)
+				cellVertices.push(this.vertices[j * (this.mapWidth + 1) + i + 1]); // bot right, (i+1,j)
 				cellVertices.push(this.vertices[j * (this.mapWidth + 1) + i]); // bot left, (i,j)
 				this.cells.push(new Cell(i, j, cellVertices));
 			}
