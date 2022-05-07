@@ -12,7 +12,7 @@ const camera = new THREE.PerspectiveCamera(
 	90, // FOV
 	window.innerWidth / window.innerHeight // Aspect
 );
-camera.position.setZ(10);
+camera.position.setZ(20);
 camera.lookAt(0, 0, 0);
 
 // Renderer init

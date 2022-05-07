@@ -47,7 +47,9 @@ class MazeGenerator {
 		// Generate vertices
 		for (let j = 0; j < this.mapHeight + 1; j++) {
 			for (let i = 0; i < this.mapWidth + 1; i++) {
-				this.vertices.push(new THREE.Vector3(i, j, 0));
+				this.vertices.push(
+					new THREE.Vector3(i - this.mapWidth / 2, j - this.mapHeight / 2, 0)
+				);
 			}
 		}
 
