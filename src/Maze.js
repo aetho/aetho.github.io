@@ -29,39 +29,55 @@ class Cell {
 }
 
 class MazeGenerator {
-	mapWidth;
-	mapHeight;
-	vertices;
-	cells;
+	#mapWidth;
+	#mapHeight;
+	#vertices;
+
+	#cells;
+	get cells() {
+		return this.#cells;
+	}
+
+	#mesh;
+	get mesh() {
+		return this.#mesh;
+	}
 
 	constructor(mapWidth, mapHeight) {
-		this.mapWidth = mapWidth;
-		this.mapHeight = mapHeight;
+		this.#mapWidth = mapWidth;
+		this.#mapHeight = mapHeight;
 		this.Generate();
 	}
 
 	Generate() {
-		this.vertices = []; // length: (mapHeight+1)*(mapWidth+1)
-		this.cells = []; // length: mapHeight*mapWidth
+		this.#GenerateMaze();
+		this.#GenerateMesh();
+	}
+
+	#GenerateMaze() {
+		this.#vertices = []; // length: (mapHeight+1)*(mapWidth+1)
+		this.#cells = []; // length: mapHeight*mapWidth
 
 		// Generate vertices
-		for (let j = 0; j < this.mapHeight + 1; j++) {
-			for (let i = 0; i < this.mapWidth + 1; i++) {
-				this.vertices.push(
-					new THREE.Vector3(i - this.mapWidth / 2, j - this.mapHeight / 2, 0)
+		for (let j = 0; j < this.#mapHeight + 1; j++) {
+			for (let i = 0; i < this.#mapWidth + 1; i++) {
+				this.#vertices.push(
+					new THREE.Vector3(i - this.#mapWidth / 2, j - this.#mapHeight / 2, 0)
 				);
 			}
 		}
 
 		// Generate cells
-		for (let j = 0; j < this.mapHeight; j++) {
-			for (let i = 0; i < this.mapWidth; i++) {
+		for (let j = 0; j < this.#mapHeight; j++) {
+			for (let i = 0; i < this.#mapWidth; i++) {
 				const cellVertices = [];
-				cellVertices.push(this.vertices[(j + 1) * (this.mapWidth + 1) + i]); // top left, (i,j+1)
-				cellVertices.push(this.vertices[(j + 1) * (this.mapWidth + 1) + i + 1]); // top right, (i+1,j+1)
-				cellVertices.push(this.vertices[j * (this.mapWidth + 1) + i + 1]); // bot right, (i+1,j)
-				cellVertices.push(this.vertices[j * (this.mapWidth + 1) + i]); // bot left, (i,j)
-				this.cells.push(new Cell(i, j, cellVertices));
+				cellVertices.push(this.#vertices[(j + 1) * (this.#mapWidth + 1) + i]); // top left, (i,j+1)
+				cellVertices.push(
+					this.#vertices[(j + 1) * (this.#mapWidth + 1) + i + 1]
+				); // top right, (i+1,j+1)
+				cellVertices.push(this.#vertices[j * (this.#mapWidth + 1) + i + 1]); // bot right, (i+1,j)
+				cellVertices.push(this.#vertices[j * (this.#mapWidth + 1) + i]); // bot left, (i,j)
+				this.#cells.push(new Cell(i, j, cellVertices));
 			}
 		}
 
@@ -71,36 +87,36 @@ class MazeGenerator {
 
 		// Step 1
 		// Randomly choose initial cell, mark it visited and push it to stack
-		const initIdx = Math.floor(Math.random() * this.cells.length);
-		this.cells[initIdx].visited = true;
+		const initIdx = Math.floor(Math.random() * this.#cells.length);
+		this.#cells[initIdx].visited = true;
 		cellStack.push(initIdx); // stack of indices
 
 		// Step 2
 		while (cellStack.length > 0) {
 			// Step 2.1
 			const curIdx = cellStack.pop();
-			const cur = this.cells[curIdx];
+			const cur = this.#cells[curIdx];
 
 			// Step 2.2.0
 			let adjIdx = []; // indices of adjacent cells
-			if (cur.adj[0] && cur.j != this.mapHeight - 1)
+			if (cur.adj[0] && cur.j != this.#mapHeight - 1)
 				// Add top adjacent cell
-				adjIdx.push((cur.j + 1) * this.mapWidth + cur.i);
+				adjIdx.push((cur.j + 1) * this.#mapWidth + cur.i);
 
 			if (cur.adj[2] && cur.j != 0)
 				// Add bot adjacent cell
-				adjIdx.push((cur.j - 1) * this.mapWidth + cur.i);
+				adjIdx.push((cur.j - 1) * this.#mapWidth + cur.i);
 
-			if (cur.adj[1] && cur.i != this.mapWidth - 1)
+			if (cur.adj[1] && cur.i != this.#mapWidth - 1)
 				// Add right adjacent cell
-				adjIdx.push(cur.j * this.mapWidth + cur.i + 1);
+				adjIdx.push(cur.j * this.#mapWidth + cur.i + 1);
 
 			if (cur.adj[3] && cur.i != 0)
 				// Add left adjacent cell
-				adjIdx.push(cur.j * this.mapWidth + cur.i - 1);
+				adjIdx.push(cur.j * this.#mapWidth + cur.i - 1);
 
 			// Filter such that only indices of unvisited cells remain
-			adjIdx = adjIdx.filter((idx) => !this.cells[idx].visited);
+			adjIdx = adjIdx.filter((idx) => !this.#cells[idx].visited);
 
 			if (adjIdx.length > 0) {
 				// Step 2.2.1
@@ -108,7 +124,7 @@ class MazeGenerator {
 
 				// Step 2.2.2
 				const chosenIdx = adjIdx[Math.floor(Math.random() * adjIdx.length)];
-				const chosen = this.cells[chosenIdx];
+				const chosen = this.#cells[chosenIdx];
 
 				// Step 2.2.3
 				if (cur.i - chosen.i === -1) {
@@ -134,6 +150,142 @@ class MazeGenerator {
 				cellStack.push(chosenIdx);
 			}
 		}
+	}
+
+	#GenerateMesh() {
+		const geometry = new THREE.BufferGeometry();
+
+		const indices = [];
+
+		const vertices = [];
+		const normals = [];
+		const colors = [];
+
+		const wallWidth = 0.3;
+		const halfWidth = wallWidth / 2;
+
+		for (let n = 0; n < this.#vertices.length; n++) {
+			const v = this.#vertices[n];
+			vertices.push(v.x - halfWidth, v.y - halfWidth, v.z);
+			normals.push(0, 0, 1);
+			vertices.push(v.x + halfWidth, v.y - halfWidth, v.z);
+			normals.push(0, 0, 1);
+			vertices.push(v.x + halfWidth, v.y + halfWidth, v.z);
+			normals.push(0, 0, 1);
+			vertices.push(v.x - halfWidth, v.y + halfWidth, v.z);
+			normals.push(0, 0, 1);
+
+			const a = n * 4;
+			const b = n * 4 + 1;
+			const c = n * 4 + 2;
+			const d = n * 4 + 3;
+			indices.push(a, b, d);
+			indices.push(b, c, d);
+		}
+
+		for (let n = 0; n < this.#cells.length; n++) {
+			const cell = this.#cells[n];
+			const tl = cell.vertices[0]; // top left
+			const tr = cell.vertices[1]; // top right
+			const br = cell.vertices[2]; // bot right
+			const bl = cell.vertices[3]; // bot left
+
+			let startIdx; // keeps track of where to start indexing
+			if (cell.adj[0]) {
+				startIdx = vertices.length / 3;
+
+				vertices.push(tl.x + halfWidth, tl.y - halfWidth, tl.z);
+				normals.push(0, 0, 1);
+				vertices.push(tr.x - halfWidth, tr.y - halfWidth, tr.z);
+				normals.push(0, 0, 1);
+				vertices.push(tr.x - halfWidth, tr.y + halfWidth, tr.z);
+				normals.push(0, 0, 1);
+				vertices.push(tl.x + halfWidth, tl.y + halfWidth, tl.z);
+				normals.push(0, 0, 1);
+
+				const a = startIdx;
+				const b = startIdx + 1;
+				const c = startIdx + 2;
+				const d = startIdx + 3;
+
+				indices.push(a, b, d);
+				indices.push(b, c, d);
+			}
+			if (cell.adj[1]) {
+				startIdx = vertices.length / 3;
+
+				vertices.push(br.x - halfWidth, br.y + halfWidth, br.z);
+				normals.push(0, 0, 1);
+				vertices.push(br.x + halfWidth, br.y + halfWidth, br.z);
+				normals.push(0, 0, 1);
+				vertices.push(tr.x + halfWidth, tr.y - halfWidth, tr.z);
+				normals.push(0, 0, 1);
+				vertices.push(tr.x - halfWidth, tr.y - halfWidth, tr.z);
+				normals.push(0, 0, 1);
+
+				const a = startIdx;
+				const b = startIdx + 1;
+				const c = startIdx + 2;
+				const d = startIdx + 3;
+
+				indices.push(a, b, d);
+				indices.push(b, c, d);
+			}
+			if (cell.adj[2]) {
+				startIdx = vertices.length / 3;
+
+				vertices.push(bl.x + halfWidth, bl.y - halfWidth, bl.z);
+				normals.push(0, 0, 1);
+				vertices.push(br.x - halfWidth, br.y - halfWidth, br.z);
+				normals.push(0, 0, 1);
+				vertices.push(br.x - halfWidth, br.y + halfWidth, br.z);
+				normals.push(0, 0, 1);
+				vertices.push(bl.x + halfWidth, bl.y + halfWidth, bl.z);
+				normals.push(0, 0, 1);
+
+				const a = startIdx;
+				const b = startIdx + 1;
+				const c = startIdx + 2;
+				const d = startIdx + 3;
+
+				indices.push(a, b, d);
+				indices.push(b, c, d);
+			}
+			if (cell.adj[3]) {
+				startIdx = vertices.length / 3;
+
+				vertices.push(bl.x - halfWidth, bl.y + halfWidth, bl.z);
+				normals.push(0, 0, 1);
+				vertices.push(bl.x + halfWidth, bl.y + halfWidth, bl.z);
+				normals.push(0, 0, 1);
+				vertices.push(tl.x + halfWidth, tl.y - halfWidth, tl.z);
+				normals.push(0, 0, 1);
+				vertices.push(tl.x - halfWidth, tl.y - halfWidth, tl.z);
+				normals.push(0, 0, 1);
+
+				const a = startIdx;
+				const b = startIdx + 1;
+				const c = startIdx + 2;
+				const d = startIdx + 3;
+
+				indices.push(a, b, d);
+				indices.push(b, c, d);
+			}
+		}
+
+		geometry.setIndex(indices);
+		geometry.setAttribute(
+			"position",
+			new THREE.Float32BufferAttribute(vertices, 3)
+		);
+		geometry.setAttribute(
+			"normal",
+			new THREE.Float32BufferAttribute(normals, 3)
+		);
+		geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+
+		const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+		this.#mesh = new THREE.Mesh(geometry, material);
 	}
 }
 

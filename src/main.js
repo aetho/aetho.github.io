@@ -31,31 +31,16 @@ scene.add(ambientlight);
 
 // Directional light
 const directionalLight = new THREE.DirectionalLight(0xfff4d6, 0.5);
-directionalLight.position.set(0, 3, 0);
+directionalLight.position.set(0, 3, 10);
 directionalLight.rotation.set(50, -30, 0);
 scene.add(directionalLight);
 
 // Generate Maze
-const mazeGenerator = new MazeGenerator(30, 30);
+const mazeGenerator = new MazeGenerator(100, 100);
 
-// Draw edges
-const mazeCells = mazeGenerator.cells;
-function Line(start, end) {
-	const lineMat = new THREE.LineBasicMaterial();
-	const points = [start, end];
-	const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
-	const line = new THREE.Line(lineGeo, lineMat);
-	return line;
-}
-for (let n = 0; n < mazeCells.length; n++) {
-	const cell = mazeCells[n];
-	const cellVertices = cell.vertices;
-
-	if (cell.adj[0]) scene.add(Line(cellVertices[0], cellVertices[1]));
-	if (cell.adj[1]) scene.add(Line(cellVertices[1], cellVertices[2]));
-	if (cell.adj[2]) scene.add(Line(cellVertices[2], cellVertices[3]));
-	if (cell.adj[3]) scene.add(Line(cellVertices[3], cellVertices[0]));
-}
+// Draw maze mesh
+const mazeMesh = mazeGenerator.mesh;
+scene.add(mazeMesh);
 
 // draw loop
 function animate() {
