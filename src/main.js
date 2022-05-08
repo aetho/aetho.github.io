@@ -37,19 +37,9 @@ scene.add(directionalLight);
 
 // Generate Maze
 const mazeGenerator = new MazeGenerator(30, 30);
-const mazeVertices = mazeGenerator.vertices;
-const mazeCells = mazeGenerator.cells;
-
-// Draw vertices
-const sphGeo = new THREE.SphereGeometry(0.1);
-const sphMat = new THREE.MeshLambertMaterial();
-for (let n = 0; n < mazeVertices.length; n++) {
-	const sphere = new THREE.Mesh(sphGeo, sphMat);
-	sphere.position.set(...mazeVertices[n].toArray());
-	scene.add(sphere);
-}
 
 // Draw edges
+const mazeCells = mazeGenerator.cells;
 function Line(start, end) {
 	const lineMat = new THREE.LineBasicMaterial();
 	const points = [start, end];
