@@ -37,7 +37,7 @@ directionalLight.rotation.set(50, -30, 0);
 scene.add(directionalLight);
 
 // Generate Maze
-const mazeGenerator = new MazeGenerator(100, 100);
+const mazeGenerator = new MazeGenerator(35, 35);
 
 // Draw maze mesh
 const mazeMesh = mazeGenerator.mesh;
