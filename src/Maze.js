@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { Vector3 } from "three";
 
 class Cell {
 	#i;
@@ -161,115 +162,137 @@ class MazeGenerator {
 		const normals = [];
 		const colors = [];
 
-		const wallWidth = 0.3;
+		const wallHeight = 1;
+		const wallWidth = 0.5;
 		const halfWidth = wallWidth / 2;
 
-		for (let n = 0; n < this.#vertices.length; n++) {
-			const v = this.#vertices[n];
-			vertices.push(v.x - halfWidth, v.y - halfWidth, v.z);
-			normals.push(0, 0, 1);
-			vertices.push(v.x + halfWidth, v.y - halfWidth, v.z);
-			normals.push(0, 0, 1);
-			vertices.push(v.x + halfWidth, v.y + halfWidth, v.z);
-			normals.push(0, 0, 1);
-			vertices.push(v.x - halfWidth, v.y + halfWidth, v.z);
-			normals.push(0, 0, 1);
+		/**
+		 * Extrudes a given quad in the positive z-direction
+		 * @param {Vector3[]} qVertices - An array describing a quad in the xy-plane. (Vertices are expected to be listed clockwise)
+		 * @param {number} height - Height of extrusion
+		 */
+		function AddQuadPrism(qVertices, height) {
+			const v = [...qVertices];
+			for (let n = 0; n < qVertices.length; n++) {
+				v.push(qVertices[n].clone().setZ(qVertices[n].z + height));
+			}
 
-			const a = n * 4;
-			const b = n * 4 + 1;
-			const c = n * 4 + 2;
-			const d = n * 4 + 3;
-			indices.push(a, b, d);
-			indices.push(b, c, d);
+			const faces = [
+				{
+					name: "top",
+					v: [4, 5, 6, 7],
+					n: [0, 0, 1],
+				},
+				{
+					name: "bot",
+					v: [1, 0, 3, 2],
+					n: [0, 0, -1],
+				},
+				{
+					name: "left",
+					v: [4, 7, 3, 0],
+					n: [-1, 0, 0],
+				},
+				{
+					name: "right",
+					v: [6, 5, 1, 2],
+					n: [1, 0, 0],
+				},
+				{
+					name: "front",
+					v: [7, 6, 2, 3],
+					n: [0, 1, 0],
+				},
+				{
+					name: "back",
+					v: [5, 4, 0, 1],
+					n: [0, -1, 0],
+				},
+			];
+
+			for (let i = 0; i < faces.length; i++) {
+				const startIdx = vertices.length / 3;
+				const a = startIdx;
+				const b = startIdx + 1;
+				const c = startIdx + 2;
+				const d = startIdx + 3;
+
+				const face = faces[i];
+
+				vertices.push(...v[face.v[0]].toArray());
+				vertices.push(...v[face.v[1]].toArray());
+				vertices.push(...v[face.v[2]].toArray());
+				vertices.push(...v[face.v[3]].toArray());
+
+				normals.push(...face.n, ...face.n, ...face.n, ...face.n);
+
+				indices.push(a, c, b);
+				indices.push(c, a, d);
+			}
 		}
 
+		// Maze vertices
+		for (let n = 0; n < this.#vertices.length; n++) {
+			const v = [
+				this.#vertices[n]
+					.clone()
+					.add(new THREE.Vector3(-halfWidth, halfWidth, 0)),
+				this.#vertices[n]
+					.clone()
+					.add(new THREE.Vector3(halfWidth, halfWidth, 0)),
+				this.#vertices[n]
+					.clone()
+					.add(new THREE.Vector3(halfWidth, -halfWidth, 0)),
+				this.#vertices[n]
+					.clone()
+					.add(new THREE.Vector3(-halfWidth, -halfWidth, 0)),
+			];
+			AddQuadPrism(v, wallHeight);
+		}
+
+		// Maze walls
 		for (let n = 0; n < this.#cells.length; n++) {
-			const cell = this.#cells[n];
-			const tl = cell.vertices[0]; // top left
-			const tr = cell.vertices[1]; // top right
-			const br = cell.vertices[2]; // bot right
-			const bl = cell.vertices[3]; // bot left
+			const c = this.#cells[n];
+			const tl = c.vertices[0];
+			const tr = c.vertices[1];
+			const br = c.vertices[2];
+			const bl = c.vertices[3];
 
-			let startIdx; // keeps track of where to start indexing
-			if (cell.adj[0]) {
-				startIdx = vertices.length / 3;
-
-				vertices.push(tl.x + halfWidth, tl.y - halfWidth, tl.z);
-				normals.push(0, 0, 1);
-				vertices.push(tr.x - halfWidth, tr.y - halfWidth, tr.z);
-				normals.push(0, 0, 1);
-				vertices.push(tr.x - halfWidth, tr.y + halfWidth, tr.z);
-				normals.push(0, 0, 1);
-				vertices.push(tl.x + halfWidth, tl.y + halfWidth, tl.z);
-				normals.push(0, 0, 1);
-
-				const a = startIdx;
-				const b = startIdx + 1;
-				const c = startIdx + 2;
-				const d = startIdx + 3;
-
-				indices.push(a, b, d);
-				indices.push(b, c, d);
+			if (c.adj[0]) {
+				const v = [
+					tl.clone().add(new THREE.Vector3(halfWidth, halfWidth, 0)),
+					tr.clone().add(new THREE.Vector3(-halfWidth, halfWidth, 0)),
+					tr.clone().add(new THREE.Vector3(-halfWidth, -halfWidth, 0)),
+					tl.clone().add(new THREE.Vector3(halfWidth, -halfWidth, 0)),
+				];
+				AddQuadPrism(v, wallHeight);
 			}
-			if (cell.adj[1]) {
-				startIdx = vertices.length / 3;
-
-				vertices.push(br.x - halfWidth, br.y + halfWidth, br.z);
-				normals.push(0, 0, 1);
-				vertices.push(br.x + halfWidth, br.y + halfWidth, br.z);
-				normals.push(0, 0, 1);
-				vertices.push(tr.x + halfWidth, tr.y - halfWidth, tr.z);
-				normals.push(0, 0, 1);
-				vertices.push(tr.x - halfWidth, tr.y - halfWidth, tr.z);
-				normals.push(0, 0, 1);
-
-				const a = startIdx;
-				const b = startIdx + 1;
-				const c = startIdx + 2;
-				const d = startIdx + 3;
-
-				indices.push(a, b, d);
-				indices.push(b, c, d);
+			if (c.adj[1]) {
+				const v = [
+					tr.clone().add(new THREE.Vector3(-halfWidth, -halfWidth, 0)),
+					tr.clone().add(new THREE.Vector3(halfWidth, -halfWidth, 0)),
+					br.clone().add(new THREE.Vector3(halfWidth, halfWidth, 0)),
+					br.clone().add(new THREE.Vector3(-halfWidth, halfWidth, 0)),
+				];
+				AddQuadPrism(v, wallHeight);
 			}
-			if (cell.adj[2]) {
-				startIdx = vertices.length / 3;
-
-				vertices.push(bl.x + halfWidth, bl.y - halfWidth, bl.z);
-				normals.push(0, 0, 1);
-				vertices.push(br.x - halfWidth, br.y - halfWidth, br.z);
-				normals.push(0, 0, 1);
-				vertices.push(br.x - halfWidth, br.y + halfWidth, br.z);
-				normals.push(0, 0, 1);
-				vertices.push(bl.x + halfWidth, bl.y + halfWidth, bl.z);
-				normals.push(0, 0, 1);
-
-				const a = startIdx;
-				const b = startIdx + 1;
-				const c = startIdx + 2;
-				const d = startIdx + 3;
-
-				indices.push(a, b, d);
-				indices.push(b, c, d);
+			if (c.adj[2]) {
+				const v = [
+					bl.clone().add(new THREE.Vector3(halfWidth, halfWidth, 0)),
+					br.clone().add(new THREE.Vector3(-halfWidth, halfWidth, 0)),
+					br.clone().add(new THREE.Vector3(-halfWidth, -halfWidth, 0)),
+					bl.clone().add(new THREE.Vector3(halfWidth, -halfWidth, 0)),
+				];
+				AddQuadPrism(v, wallHeight);
 			}
-			if (cell.adj[3]) {
-				startIdx = vertices.length / 3;
-
-				vertices.push(bl.x - halfWidth, bl.y + halfWidth, bl.z);
-				normals.push(0, 0, 1);
-				vertices.push(bl.x + halfWidth, bl.y + halfWidth, bl.z);
-				normals.push(0, 0, 1);
-				vertices.push(tl.x + halfWidth, tl.y - halfWidth, tl.z);
-				normals.push(0, 0, 1);
-				vertices.push(tl.x - halfWidth, tl.y - halfWidth, tl.z);
-				normals.push(0, 0, 1);
-
-				const a = startIdx;
-				const b = startIdx + 1;
-				const c = startIdx + 2;
-				const d = startIdx + 3;
-
-				indices.push(a, b, d);
-				indices.push(b, c, d);
+			if (c.adj[3]) {
+				const v = [
+					tl.clone().add(new THREE.Vector3(-halfWidth, -halfWidth, 0)),
+					tl.clone().add(new THREE.Vector3(halfWidth, -halfWidth, 0)),
+					bl.clone().add(new THREE.Vector3(halfWidth, halfWidth, 0)),
+					bl.clone().add(new THREE.Vector3(-halfWidth, halfWidth, 0)),
+				];
+				AddQuadPrism(v, wallHeight);
 			}
 		}
 
@@ -284,7 +307,7 @@ class MazeGenerator {
 		);
 		geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
 
-		const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+		const material = new THREE.MeshLambertMaterial({ color: 0xffffff });
 		this.#mesh = new THREE.Mesh(geometry, material);
 	}
 }

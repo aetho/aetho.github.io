@@ -18,6 +18,7 @@ camera.lookAt(0, 0, 0);
 // Renderer init
 const renderer = new THREE.WebGLRenderer({
 	canvas: document.querySelector("#app"),
+	antialias: true,
 });
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
