@@ -1,33 +1,6 @@
 import * as THREE from "three";
 import { Vector3 } from "three";
-
-class Cell {
-	#i;
-	get i() {
-		return this.#i;
-	}
-
-	#j;
-	get j() {
-		return this.#j;
-	}
-
-	#vertices;
-	get vertices() {
-		return this.#vertices;
-	}
-
-	adj;
-	visited;
-
-	constructor(i, j, vertices) {
-		this.#i = i;
-		this.#j = j;
-		this.#vertices = vertices;
-		this.adj = [true, true, true, true]; // top, right, bot, left
-		this.visited = false;
-	}
-}
+import { Cell } from "./Structures";
 
 class MazeGenerator {
 	#mapWidth;
@@ -47,15 +20,15 @@ class MazeGenerator {
 	constructor(mapWidth, mapHeight) {
 		this.#mapWidth = mapWidth;
 		this.#mapHeight = mapHeight;
-		this.Generate();
+		this.generate();
 	}
 
-	Generate() {
-		this.#GenerateMaze();
-		this.#GenerateMesh();
+	generate() {
+		this.#generateMaze();
+		this.#generateMesh();
 	}
 
-	#GenerateMaze() {
+	#generateMaze() {
 		this.#vertices = []; // length: (mapHeight+1)*(mapWidth+1)
 		this.#cells = []; // length: mapHeight*mapWidth
 
@@ -153,7 +126,7 @@ class MazeGenerator {
 		}
 	}
 
-	#GenerateMesh() {
+	#generateMesh() {
 		const geometry = new THREE.BufferGeometry();
 
 		const indices = [];
@@ -312,4 +285,4 @@ class MazeGenerator {
 	}
 }
 
-export { Cell, MazeGenerator };
+export { MazeGenerator };

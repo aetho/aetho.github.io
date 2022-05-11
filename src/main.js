@@ -2,6 +2,7 @@ import "./style.css";
 import * as THREE from "three";
 import { MazeGenerator } from "./Maze";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { MinHeap } from "./Structures";
 
 // Scene init
 const scene = new THREE.Scene();
@@ -47,6 +48,11 @@ scene.add(mazeMesh);
 function animate() {
 	requestAnimationFrame(animate);
 	controls.update();
+
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
+	renderer.setSize(window.innerWidth, window.innerHeight);
+
 	renderer.render(scene, camera);
 }
 animate();
