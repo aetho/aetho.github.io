@@ -61,7 +61,31 @@ class MinHeap {
 		}
 	}
 
-	pop() {}
+	pop() {
+		if (this.count === 0) return undefined;
+		this.#swap(this.#top, this.count - 1);
+		const popped = this.#heap.pop();
+
+		let current = this.#top;
+		let child = this.#children(current);
+		let chosen;
+
+		while (
+			this.#comparator(this.#heap[child[0]], this.#heap[current]) ||
+			this.#comparator(this.#heap[child[1]], this.#heap[current])
+		) {
+			if (!this.#heap[child[1]]) chosen = child[0];
+			else
+				chosen = this.#comparator(this.#heap[child[0]], this.#heap[child[1]])
+					? child[0]
+					: child[1];
+			this.#swap(current, chosen);
+			current = chosen;
+			child = this.#children(current);
+		}
+
+		return popped;
+	}
 
 	peek() {
 		return this.#heap[this.#top];

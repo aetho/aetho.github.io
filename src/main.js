@@ -2,7 +2,6 @@ import "./style.css";
 import * as THREE from "three";
 import { MazeGenerator } from "./Maze";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { MinHeap } from "./Structures";
 
 // Scene init
 const scene = new THREE.Scene();
