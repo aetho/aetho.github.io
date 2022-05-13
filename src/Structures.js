@@ -49,15 +49,19 @@ class MinHeap {
 		return this.#heap;
 	}
 
-	push(...values) {
-		for (let i = 0; i < values.length; i++) {
-			this.#heap.push(values[i]);
+	push(...elements) {
+		for (let i = 0; i < elements.length; i++) {
+			this.#heap.push(elements[i]);
 			let current = this.count - 1;
 			let parent = this.#parent(current);
-			while (this.#comparator(this.#heap[current], this.#heap[parent])) {
-				this.#swap(current, parent);
-				[current, parent] = [parent, this.#parent(parent)];
-			}
+			this.propUp(current, parent);
+		}
+	}
+
+	propUp(current, parent) {
+		while (this.#comparator(this.#heap[current], this.#heap[parent])) {
+			this.#swap(current, parent);
+			[current, parent] = [parent, this.#parent(parent)];
 		}
 	}
 
@@ -68,6 +72,12 @@ class MinHeap {
 
 		let current = this.#top;
 		let child = this.#children(current);
+		this.propDown(current, child);
+
+		return popped;
+	}
+
+	propDown(current, child) {
 		let chosen;
 
 		while (
@@ -83,12 +93,24 @@ class MinHeap {
 			current = chosen;
 			child = this.#children(current);
 		}
-
-		return popped;
 	}
 
 	peek() {
 		return this.#heap[this.#top];
+	}
+
+	remove(element) {
+		let current = this.#heap.indexOf(element);
+		this.#swap(current, this.count - 1);
+		this.#heap.pop();
+
+		this.propUp(current, this.#parent(current));
+		current = this.#heap.indexOf(element);
+		this.propDown(current, this.#children(current));
+	}
+
+	includes(searchElement) {
+		return this.#heap.includes(searchElement);
 	}
 
 	#swap(i, j) {
