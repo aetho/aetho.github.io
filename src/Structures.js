@@ -17,12 +17,15 @@ class Cell {
 	adj;
 	visited;
 
+	sol;
+
 	constructor(i, j, vertices) {
 		this.#i = i;
 		this.#j = j;
 		this.#vertices = vertices;
 		this.adj = [true, true, true, true]; // top, right, bot, left
 		this.visited = false;
+		this.sol = false;
 	}
 }
 
@@ -35,7 +38,7 @@ class MinHeap {
 		return this.#heap.length;
 	}
 
-	get isEmpty() {
+	isEmpty() {
 		return this.#heap.length === 0;
 	}
 

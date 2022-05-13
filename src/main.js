@@ -2,6 +2,8 @@ import "./style.css";
 import * as THREE from "three";
 import { MazeGenerator } from "./Maze";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { AStar } from "./Solver";
+import { MinHeap } from "./Structures";
 
 // Scene init
 const scene = new THREE.Scene();
@@ -38,6 +40,11 @@ scene.add(directionalLight);
 
 // Generate Maze
 const mazeGenerator = new MazeGenerator(35, 35);
+
+// Test A* solver
+const solver = new AStar(mazeGenerator);
+solver.solve(0, 35 * 35 - 1);
+mazeGenerator.generateMesh();
 
 // Draw maze mesh
 const mazeMesh = mazeGenerator.mesh;

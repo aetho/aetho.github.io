@@ -4,7 +4,15 @@ import { Cell } from "./Structures";
 
 class MazeGenerator {
 	#mapWidth;
+	get mapWidth() {
+		return this.#mapWidth;
+	}
+
 	#mapHeight;
+	get mapHeight() {
+		return this.#mapHeight;
+	}
+
 	#vertices;
 
 	#cells;
@@ -24,11 +32,11 @@ class MazeGenerator {
 	}
 
 	generate() {
-		this.#generateMaze();
-		this.#generateMesh();
+		this.generateMaze();
+		this.generateMesh();
 	}
 
-	#generateMaze() {
+	generateMaze() {
 		this.#vertices = []; // length: (mapHeight+1)*(mapWidth+1)
 		this.#cells = []; // length: mapHeight*mapWidth
 
@@ -126,7 +134,12 @@ class MazeGenerator {
 		}
 	}
 
-	#generateMesh() {
+	generateMesh(
+		wallHeight = 1,
+		wallWidth = 0.5,
+		wallColor = [1, 1, 1],
+		solColor = [26 / 255, 139 / 255, 255 / 255]
+	) {
 		const geometry = new THREE.BufferGeometry();
 
 		const indices = [];
@@ -135,8 +148,6 @@ class MazeGenerator {
 		const normals = [];
 		const colors = [];
 
-		const wallHeight = 1;
-		const wallWidth = 0.5;
 		const halfWidth = wallWidth / 2;
 
 		/**
@@ -144,7 +155,7 @@ class MazeGenerator {
 		 * @param {Vector3[]} qVertices - An array describing a quad in the xy-plane. (Vertices are expected to be listed clockwise)
 		 * @param {number} height - Height of extrusion
 		 */
-		function AddQuadPrism(qVertices, height) {
+		function AddQuadPrism(qVertices, height, color) {
 			const v = [...qVertices];
 			for (let n = 0; n < qVertices.length; n++) {
 				v.push(qVertices[n].clone().setZ(qVertices[n].z + height));
@@ -198,6 +209,7 @@ class MazeGenerator {
 				vertices.push(...v[face.v[3]].toArray());
 
 				normals.push(...face.n, ...face.n, ...face.n, ...face.n);
+				colors.push(...color, ...color, ...color, ...color);
 
 				indices.push(a, c, b);
 				indices.push(c, a, d);
@@ -220,7 +232,7 @@ class MazeGenerator {
 					.clone()
 					.add(new THREE.Vector3(-halfWidth, -halfWidth, 0)),
 			];
-			AddQuadPrism(v, wallHeight);
+			AddQuadPrism(v, wallHeight, wallColor);
 		}
 
 		// Maze walls
@@ -238,7 +250,7 @@ class MazeGenerator {
 					tr.clone().add(new THREE.Vector3(-halfWidth, -halfWidth, 0)),
 					tl.clone().add(new THREE.Vector3(halfWidth, -halfWidth, 0)),
 				];
-				AddQuadPrism(v, wallHeight);
+				AddQuadPrism(v, wallHeight, wallColor);
 			}
 			if (c.adj[1]) {
 				const v = [
@@ -247,7 +259,7 @@ class MazeGenerator {
 					br.clone().add(new THREE.Vector3(halfWidth, halfWidth, 0)),
 					br.clone().add(new THREE.Vector3(-halfWidth, halfWidth, 0)),
 				];
-				AddQuadPrism(v, wallHeight);
+				AddQuadPrism(v, wallHeight, wallColor);
 			}
 			if (c.adj[2]) {
 				const v = [
@@ -256,7 +268,7 @@ class MazeGenerator {
 					br.clone().add(new THREE.Vector3(-halfWidth, -halfWidth, 0)),
 					bl.clone().add(new THREE.Vector3(halfWidth, -halfWidth, 0)),
 				];
-				AddQuadPrism(v, wallHeight);
+				AddQuadPrism(v, wallHeight, wallColor);
 			}
 			if (c.adj[3]) {
 				const v = [
@@ -265,7 +277,15 @@ class MazeGenerator {
 					bl.clone().add(new THREE.Vector3(halfWidth, halfWidth, 0)),
 					bl.clone().add(new THREE.Vector3(-halfWidth, halfWidth, 0)),
 				];
-				AddQuadPrism(v, wallHeight);
+				AddQuadPrism(v, wallHeight, wallColor);
+			}
+		}
+
+		// Solution
+		for (let n = 0; n < this.#cells.length; n++) {
+			const v = this.#cells[n].vertices;
+			if (this.#cells[n].sol) {
+				AddQuadPrism(v, wallHeight * 0.9, solColor);
 			}
 		}
 
@@ -280,7 +300,10 @@ class MazeGenerator {
 		);
 		geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
 
-		const material = new THREE.MeshLambertMaterial({ color: 0xffffff });
+		const material = new THREE.MeshLambertMaterial({
+			color: 0xffffff,
+			vertexColors: true,
+		});
 		this.#mesh = new THREE.Mesh(geometry, material);
 	}
 }
