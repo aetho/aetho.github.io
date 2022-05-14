@@ -1,9 +1,7 @@
 import "./style.css";
 import * as THREE from "three";
 import { MazeGenerator } from "./Maze";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { AStar } from "./Solver";
-import { MinHeap } from "./Structures";
 
 // Scene init
 const scene = new THREE.Scene();
@@ -14,8 +12,13 @@ const camera = new THREE.PerspectiveCamera(
 	90, // FOV
 	window.innerWidth / window.innerHeight // Aspect
 );
-camera.position.setZ(20);
+camera.position.setZ(25);
+camera.position.setY(-25);
 camera.lookAt(0, 0, 0);
+
+const cameraGroup = new THREE.Group();
+cameraGroup.add(camera);
+scene.add(cameraGroup);
 
 // Renderer init
 const renderer = new THREE.WebGLRenderer({
@@ -24,9 +27,6 @@ const renderer = new THREE.WebGLRenderer({
 });
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
-
-// Orbit controls
-const controls = new OrbitControls(camera, renderer.domElement);
 
 // Add light
 const ambientlight = new THREE.AmbientLight(0xffffff, 0.7);
@@ -50,14 +50,20 @@ mazeGenerator.generateMesh();
 const mazeMesh = mazeGenerator.mesh;
 scene.add(mazeMesh);
 
-// draw loop
-function animate() {
-	requestAnimationFrame(animate);
-	controls.update();
-
+// Update renderer and camera on resize
+window.addEventListener("resize", () => {
 	camera.aspect = window.innerWidth / window.innerHeight;
 	camera.updateProjectionMatrix();
 	renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// draw loop
+let t = 0;
+function animate() {
+	requestAnimationFrame(animate);
+
+	t += 0.001;
+	cameraGroup.rotation.z = t;
 
 	renderer.render(scene, camera);
 }
