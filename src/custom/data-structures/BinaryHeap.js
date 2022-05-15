@@ -1,33 +1,4 @@
-class Cell {
-	#i;
-	get i() {
-		return this.#i;
-	}
-
-	#j;
-	get j() {
-		return this.#j;
-	}
-
-	#vertices;
-	get vertices() {
-		return this.#vertices;
-	}
-
-	adj;
-	visited;
-
-	constructor(i, j, vertices) {
-		this.#i = i;
-		this.#j = j;
-		this.#vertices = vertices;
-		this.adj = [true, true, true, true]; // top, right, bot, left
-		this.visited = false;
-		this.sol = false;
-	}
-}
-
-class MinHeap {
+class BinaryHeap {
 	#heap;
 	#comparator;
 	#top;
@@ -42,6 +13,7 @@ class MinHeap {
 
 	constructor(comparator = (a, b) => a < b) {
 		this.#heap = [];
+		// NOTE: default comparator results in a Min-Heap
 		this.#comparator = comparator;
 		this.#top = 0;
 	}
@@ -125,4 +97,4 @@ class MinHeap {
 	}
 }
 
-export { Cell, MinHeap };
+export { BinaryHeap };

@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import { Vector3 } from "three";
-import { Cell } from "./Structures";
+import { Cell } from "../data-structures/Cell";
 
-class MazeGenerator {
+class Maze {
 	#mapWidth;
 	get mapWidth() {
 		return this.#mapWidth;
@@ -292,6 +292,34 @@ class MazeGenerator {
 		});
 		this.#mesh = new THREE.Mesh(geometry, material);
 	}
+
+	/**
+	 *
+	 * @param {number} n - cell index
+	 * @returns indices of traversable neighbors
+	 */
+	travNeighbors(n) {
+		if (n < 0 || n > this.#cells.length) return;
+		const [j, i] = [Math.floor(n / this.#mapWidth), n % this.#mapWidth];
+
+		let top = (j + 1) * this.#mapWidth + i;
+		let right = j * this.#mapWidth + i + 1;
+		let bot = (j - 1) * this.#mapWidth + i;
+		let left = j * this.#mapWidth + i - 1;
+
+		const neighbors = [];
+
+		if (!(top < 0 || top > this.#cells.length || this.#cells[n].adj[0]))
+			neighbors.push(top);
+		if (!(right < 0 || right > this.#cells.length || this.#cells[n].adj[1]))
+			neighbors.push(right);
+		if (!(bot < 0 || bot > this.#cells.length || this.#cells[n].adj[2]))
+			neighbors.push(bot);
+		if (!(left < 0 || left > this.#cells.length || this.#cells[n].adj[3]))
+			neighbors.push(left);
+
+		return neighbors;
+	}
 }
 
-export { MazeGenerator };
+export { Maze };
