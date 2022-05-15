@@ -18,7 +18,7 @@ function init() {
 
 	// Camera init
 	camera = new THREE.PerspectiveCamera(
-		90, // FOV
+		75, // FOV
 		window.innerWidth / window.innerHeight // Aspect
 	);
 	camera.position.setZ(25);
