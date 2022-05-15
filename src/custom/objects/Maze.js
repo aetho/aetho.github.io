@@ -138,7 +138,6 @@ class Maze {
 		const geometry = new THREE.BufferGeometry();
 
 		const indices = [];
-
 		const vertices = [];
 		const normals = [];
 		const colors = [];
@@ -213,64 +212,117 @@ class Maze {
 
 		// Maze vertices
 		for (let n = 0; n < this.#vertices.length; n++) {
+			const current = this.#vertices[n];
 			const v = [
-				this.#vertices[n]
+				current
 					.clone()
-					.add(new THREE.Vector3(-halfWidth, halfWidth, 0)),
-				this.#vertices[n]
+					.setX(current.x - halfWidth)
+					.setY(current.y + halfWidth),
+				current
 					.clone()
-					.add(new THREE.Vector3(halfWidth, halfWidth, 0)),
-				this.#vertices[n]
+					.setX(current.x + halfWidth)
+					.setY(current.y + halfWidth),
+				current
 					.clone()
-					.add(new THREE.Vector3(halfWidth, -halfWidth, 0)),
-				this.#vertices[n]
+					.setX(current.x + halfWidth)
+					.setY(current.y - halfWidth),
+				current
 					.clone()
-					.add(new THREE.Vector3(-halfWidth, -halfWidth, 0)),
+					.setX(current.x - halfWidth)
+					.setY(current.y - halfWidth),
 			];
 			AddQuadPrism(v, wallHeight, wallColor);
 		}
 
 		// Maze walls
 		for (let n = 0; n < this.#cells.length; n++) {
-			const c = this.#cells[n];
-			const tl = c.vertices[0];
-			const tr = c.vertices[1];
-			const br = c.vertices[2];
-			const bl = c.vertices[3];
+			const current = this.#cells[n];
+			const tl = current.vertices[0];
+			const tr = current.vertices[1];
+			const br = current.vertices[2];
+			const bl = current.vertices[3];
 
-			if (c.adj[0]) {
+			if (current.adj[0]) {
 				const v = [
-					tl.clone().add(new THREE.Vector3(halfWidth, halfWidth, 0)),
-					tr.clone().add(new THREE.Vector3(-halfWidth, halfWidth, 0)),
-					tr.clone().add(new THREE.Vector3(-halfWidth, -halfWidth, 0)),
-					tl.clone().add(new THREE.Vector3(halfWidth, -halfWidth, 0)),
+					tl
+						.clone()
+						.setX(tl.x + halfWidth)
+						.setY(tl.y + halfWidth),
+					tr
+						.clone()
+						.setX(tr.x - halfWidth)
+						.setY(tr.y + halfWidth),
+					tr
+						.clone()
+						.setX(tr.x - halfWidth)
+						.setY(tr.y - halfWidth),
+					tl
+						.clone()
+						.setX(tl.x + halfWidth)
+						.setY(tl.y - halfWidth),
 				];
 				AddQuadPrism(v, wallHeight, wallColor);
 			}
-			if (c.adj[1]) {
+			if (current.adj[1]) {
 				const v = [
-					tr.clone().add(new THREE.Vector3(-halfWidth, -halfWidth, 0)),
-					tr.clone().add(new THREE.Vector3(halfWidth, -halfWidth, 0)),
-					br.clone().add(new THREE.Vector3(halfWidth, halfWidth, 0)),
-					br.clone().add(new THREE.Vector3(-halfWidth, halfWidth, 0)),
+					tr
+						.clone()
+						.setX(tr.x - halfWidth)
+						.setY(tr.y - halfWidth),
+					tr
+						.clone()
+						.setX(tr.x + halfWidth)
+						.setY(tr.y - halfWidth),
+					br
+						.clone()
+						.setX(br.x + halfWidth)
+						.setY(br.y + halfWidth),
+					br
+						.clone()
+						.setX(br.x - halfWidth)
+						.setY(br.y + halfWidth),
 				];
 				AddQuadPrism(v, wallHeight, wallColor);
 			}
-			if (c.adj[2]) {
+			if (current.adj[2]) {
 				const v = [
-					bl.clone().add(new THREE.Vector3(halfWidth, halfWidth, 0)),
-					br.clone().add(new THREE.Vector3(-halfWidth, halfWidth, 0)),
-					br.clone().add(new THREE.Vector3(-halfWidth, -halfWidth, 0)),
-					bl.clone().add(new THREE.Vector3(halfWidth, -halfWidth, 0)),
+					bl
+						.clone()
+						.setX(bl.x + halfWidth)
+						.setY(bl.y + halfWidth),
+					br
+						.clone()
+						.setX(br.x - halfWidth)
+						.setY(br.y + halfWidth),
+					br
+						.clone()
+						.setX(br.x - halfWidth)
+						.setY(br.y - halfWidth),
+					bl
+						.clone()
+						.setX(bl.x + halfWidth)
+						.setY(bl.y - halfWidth),
 				];
 				AddQuadPrism(v, wallHeight, wallColor);
 			}
-			if (c.adj[3]) {
+			if (current.adj[3]) {
 				const v = [
-					tl.clone().add(new THREE.Vector3(-halfWidth, -halfWidth, 0)),
-					tl.clone().add(new THREE.Vector3(halfWidth, -halfWidth, 0)),
-					bl.clone().add(new THREE.Vector3(halfWidth, halfWidth, 0)),
-					bl.clone().add(new THREE.Vector3(-halfWidth, halfWidth, 0)),
+					tl
+						.clone()
+						.setX(tl.x - halfWidth)
+						.setY(tl.y - halfWidth),
+					tl
+						.clone()
+						.setX(tl.x + halfWidth)
+						.setY(tl.y - halfWidth),
+					bl
+						.clone()
+						.setX(bl.x + halfWidth)
+						.setY(bl.y + halfWidth),
+					bl
+						.clone()
+						.setX(bl.x - halfWidth)
+						.setY(bl.y + halfWidth),
 				];
 				AddQuadPrism(v, wallHeight, wallColor);
 			}
