@@ -32,11 +32,11 @@ class MazeGenerator {
 	}
 
 	generate() {
-		this.generateMaze();
-		this.generateMesh();
+		this.#generateMaze();
+		this.#generateMesh();
 	}
 
-	generateMaze() {
+	#generateMaze() {
 		this.#vertices = []; // length: (mapHeight+1)*(mapWidth+1)
 		this.#cells = []; // length: mapHeight*mapWidth
 
@@ -134,12 +134,7 @@ class MazeGenerator {
 		}
 	}
 
-	generateMesh(
-		wallHeight = 1,
-		wallWidth = 0.5,
-		wallColor = [1, 1, 1],
-		solColor = [26 / 255, 139 / 255, 255 / 255]
-	) {
+	#generateMesh(wallHeight = 1, wallWidth = 0.5, wallColor = [1, 1, 1]) {
 		const geometry = new THREE.BufferGeometry();
 
 		const indices = [];
@@ -281,14 +276,6 @@ class MazeGenerator {
 			}
 		}
 
-		// Solution
-		for (let n = 0; n < this.#cells.length; n++) {
-			const v = this.#cells[n].vertices;
-			if (this.#cells[n].sol) {
-				AddQuadPrism(v, wallHeight * 0.9, solColor);
-			}
-		}
-
 		geometry.setIndex(indices);
 		geometry.setAttribute(
 			"position",
@@ -301,7 +288,6 @@ class MazeGenerator {
 		geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
 
 		const material = new THREE.MeshLambertMaterial({
-			color: 0xffffff,
 			vertexColors: true,
 		});
 		this.#mesh = new THREE.Mesh(geometry, material);

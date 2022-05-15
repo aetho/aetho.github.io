@@ -17,8 +17,6 @@ class Cell {
 	adj;
 	visited;
 
-	sol;
-
 	constructor(i, j, vertices) {
 		this.#i = i;
 		this.#j = j;

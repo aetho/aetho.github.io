@@ -27,18 +27,7 @@ class AStar {
 
 		while (!openSet.isEmpty()) {
 			let cur = openSet.pop();
-			if (cur === goal) {
-				function setSolution(curr, map) {
-					while (parents[curr] !== undefined) {
-						map[curr].sol = true;
-						curr = parents[curr];
-					}
-					map[start].sol = true;
-					map[goal].sol = true;
-				}
-				setSolution(cur, this.#map);
-				return parents;
-			}
+			if (cur === goal) return [start, goal, parents];
 
 			closedSet.push(cur);
 
