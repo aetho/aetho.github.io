@@ -134,12 +134,16 @@ class Maze {
 		}
 	}
 
-	#generateMesh(wallHeight = 1, wallWidth = 0.5, wallColor = [1, 1, 1]) {
+	#generateMesh(
+		wallHeight = 1,
+		wallWidth = 0.5,
+		wallColor = [1, 1, 1],
+		floorColor = [0.5, 0.5, 0.5]
+	) {
 		const geometry = new THREE.BufferGeometry();
 
 		const indices = [];
 		const vertices = [];
-		const normals = [];
 		const colors = [];
 
 		const halfWidth = wallWidth / 2;
@@ -159,32 +163,26 @@ class Maze {
 				{
 					name: "top",
 					v: [4, 5, 6, 7],
-					n: [0, 0, 1],
 				},
 				{
 					name: "bot",
 					v: [1, 0, 3, 2],
-					n: [0, 0, -1],
 				},
 				{
 					name: "left",
 					v: [4, 7, 3, 0],
-					n: [-1, 0, 0],
 				},
 				{
 					name: "right",
 					v: [6, 5, 1, 2],
-					n: [1, 0, 0],
 				},
 				{
 					name: "front",
 					v: [7, 6, 2, 3],
-					n: [0, 1, 0],
 				},
 				{
 					name: "back",
 					v: [5, 4, 0, 1],
-					n: [0, -1, 0],
 				},
 			];
 
@@ -202,13 +200,21 @@ class Maze {
 				vertices.push(...v[face.v[2]].toArray());
 				vertices.push(...v[face.v[3]].toArray());
 
-				normals.push(...face.n, ...face.n, ...face.n, ...face.n);
 				colors.push(...color, ...color, ...color, ...color);
 
 				indices.push(a, c, b);
 				indices.push(c, a, d);
 			}
 		}
+
+		// Floor
+		const v = [
+			new THREE.Vector3(-this.#mapWidth / 2, this.#mapHeight / 2, -0.001),
+			new THREE.Vector3(this.#mapWidth / 2, this.#mapHeight / 2, -0.001),
+			new THREE.Vector3(this.#mapWidth / 2, -this.#mapHeight / 2, -0.001),
+			new THREE.Vector3(-this.#mapWidth / 2, -this.#mapHeight / 2, -0.001),
+		];
+		AddQuadPrism(v, 0.001, floorColor);
 
 		// Maze vertices
 		for (let n = 0; n < this.#vertices.length; n++) {
@@ -237,92 +243,92 @@ class Maze {
 		// Maze walls
 		for (let n = 0; n < this.#cells.length; n++) {
 			const current = this.#cells[n];
-			const tl = current.vertices[0];
-			const tr = current.vertices[1];
-			const br = current.vertices[2];
-			const bl = current.vertices[3];
+			const topLeft = current.vertices[0];
+			const topRight = current.vertices[1];
+			const botRight = current.vertices[2];
+			const botLeft = current.vertices[3];
 
 			if (current.adj[0]) {
 				const v = [
-					tl
+					topLeft
 						.clone()
-						.setX(tl.x + halfWidth)
-						.setY(tl.y + halfWidth),
-					tr
+						.setX(topLeft.x + halfWidth)
+						.setY(topLeft.y + halfWidth),
+					topRight
 						.clone()
-						.setX(tr.x - halfWidth)
-						.setY(tr.y + halfWidth),
-					tr
+						.setX(topRight.x - halfWidth)
+						.setY(topRight.y + halfWidth),
+					topRight
 						.clone()
-						.setX(tr.x - halfWidth)
-						.setY(tr.y - halfWidth),
-					tl
+						.setX(topRight.x - halfWidth)
+						.setY(topRight.y - halfWidth),
+					topLeft
 						.clone()
-						.setX(tl.x + halfWidth)
-						.setY(tl.y - halfWidth),
+						.setX(topLeft.x + halfWidth)
+						.setY(topLeft.y - halfWidth),
 				];
 				AddQuadPrism(v, wallHeight, wallColor);
 			}
 			if (current.adj[1]) {
 				const v = [
-					tr
+					topRight
 						.clone()
-						.setX(tr.x - halfWidth)
-						.setY(tr.y - halfWidth),
-					tr
+						.setX(topRight.x - halfWidth)
+						.setY(topRight.y - halfWidth),
+					topRight
 						.clone()
-						.setX(tr.x + halfWidth)
-						.setY(tr.y - halfWidth),
-					br
+						.setX(topRight.x + halfWidth)
+						.setY(topRight.y - halfWidth),
+					botRight
 						.clone()
-						.setX(br.x + halfWidth)
-						.setY(br.y + halfWidth),
-					br
+						.setX(botRight.x + halfWidth)
+						.setY(botRight.y + halfWidth),
+					botRight
 						.clone()
-						.setX(br.x - halfWidth)
-						.setY(br.y + halfWidth),
+						.setX(botRight.x - halfWidth)
+						.setY(botRight.y + halfWidth),
 				];
 				AddQuadPrism(v, wallHeight, wallColor);
 			}
 			if (current.adj[2]) {
 				const v = [
-					bl
+					botLeft
 						.clone()
-						.setX(bl.x + halfWidth)
-						.setY(bl.y + halfWidth),
-					br
+						.setX(botLeft.x + halfWidth)
+						.setY(botLeft.y + halfWidth),
+					botRight
 						.clone()
-						.setX(br.x - halfWidth)
-						.setY(br.y + halfWidth),
-					br
+						.setX(botRight.x - halfWidth)
+						.setY(botRight.y + halfWidth),
+					botRight
 						.clone()
-						.setX(br.x - halfWidth)
-						.setY(br.y - halfWidth),
-					bl
+						.setX(botRight.x - halfWidth)
+						.setY(botRight.y - halfWidth),
+					botLeft
 						.clone()
-						.setX(bl.x + halfWidth)
-						.setY(bl.y - halfWidth),
+						.setX(botLeft.x + halfWidth)
+						.setY(botLeft.y - halfWidth),
 				];
 				AddQuadPrism(v, wallHeight, wallColor);
 			}
 			if (current.adj[3]) {
 				const v = [
-					tl
+					topLeft
 						.clone()
-						.setX(tl.x - halfWidth)
-						.setY(tl.y - halfWidth),
-					tl
+						.setX(topLeft.x - halfWidth)
+						.setY(topLeft.y - halfWidth),
+					topLeft
 						.clone()
-						.setX(tl.x + halfWidth)
-						.setY(tl.y - halfWidth),
-					bl
+						.setX(topLeft.x + halfWidth)
+						.setY(topLeft.y - halfWidth),
+					botLeft
 						.clone()
-						.setX(bl.x + halfWidth)
-						.setY(bl.y + halfWidth),
-					bl
+						.setX(botLeft.x + halfWidth)
+						.setY(botLeft.y + halfWidth),
+					botLeft
 						.clone()
-						.setX(bl.x - halfWidth)
-						.setY(bl.y + halfWidth),
+						.setX(botLeft.x - halfWidth)
+						.setY(botLeft.y + halfWidth),
 				];
 				AddQuadPrism(v, wallHeight, wallColor);
 			}
@@ -333,16 +339,15 @@ class Maze {
 			"position",
 			new THREE.Float32BufferAttribute(vertices, 3)
 		);
-		geometry.setAttribute(
-			"normal",
-			new THREE.Float32BufferAttribute(normals, 3)
-		);
 		geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+
+		geometry.computeVertexNormals();
 
 		const material = new THREE.MeshLambertMaterial({
 			vertexColors: true,
 		});
 		this.#mesh = new THREE.Mesh(geometry, material);
+		this.#mesh.matrixAutoUpdate = false;
 	}
 
 	/**

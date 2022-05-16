@@ -2,16 +2,15 @@ import "./style.css";
 import * as THREE from "three";
 import { Maze } from "./custom/objects/Maze";
 import { AStar } from "./custom/solvers/AStar";
+import Stats from "three/examples/jsm/libs/stats.module";
+import { TrackballControls } from "three/examples/jsm/controls/TrackballControls";
 
-let scene, camera, cameraGroup, renderer;
-let t;
+let t, scene, camera, cameraGroup, renderer, stats, controls;
 
 init();
 animate();
 
 function init() {
-	t = 0;
-
 	// Scene init
 	scene = new THREE.Scene();
 	scene.background = new THREE.Color(0x36393f);
@@ -21,8 +20,8 @@ function init() {
 		75, // FOV
 		window.innerWidth / window.innerHeight // Aspect
 	);
-	camera.position.setZ(25);
-	camera.position.setY(-25);
+	camera.position.setZ(30);
+	camera.position.setY(-30);
 	camera.lookAt(0, 0, 0);
 
 	cameraGroup = new THREE.Group();
@@ -37,15 +36,13 @@ function init() {
 	renderer.setPixelRatio(window.devicePixelRatio);
 	renderer.setSize(window.innerWidth, window.innerHeight);
 
-	// Add ambient light
-	const ambientlight = new THREE.AmbientLight(0xffffff, 0.7);
-	scene.add(ambientlight);
-
-	// Directional light
-	const directionalLight = new THREE.DirectionalLight(0xffffff, 0.3);
-	directionalLight.position.set(0, 3, 10);
-	directionalLight.rotation.set(50, -30, 0);
-	scene.add(directionalLight);
+	// Global Lights
+	const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+	scene.add(ambientLight);
+	const dirLight = new THREE.DirectionalLight(0xffffff, 0.3);
+	dirLight.position.set(0, -30, 50);
+	dirLight.castShadow = true;
+	scene.add(dirLight);
 
 	// Generate maze
 	const maze = new Maze(35, 35);
@@ -57,6 +54,14 @@ function init() {
 	// Draw maze mesh
 	scene.add(maze.mesh);
 
+	// timer
+	t = 0;
+	// stats
+	stats = new Stats();
+	document.body.appendChild(stats.dom);
+	// Control
+	controls = new TrackballControls(camera, renderer.domElement);
+
 	// Update renderer and camera on resize
 	window.addEventListener("resize", handleWindowResize);
 }
@@ -64,10 +69,13 @@ function init() {
 function animate() {
 	requestAnimationFrame(animate);
 
-	t += 0.001;
-	cameraGroup.rotation.z = t;
+	// t += 0.001;
+	// cameraGroup.rotation.z = t;
 
 	renderer.render(scene, camera);
+
+	controls.update();
+	stats.update();
 }
 
 function handleWindowResize() {
