@@ -1,3 +1,5 @@
+import { Vector3 } from "three";
+
 class Cell {
 	#i;
 	get i() {
@@ -16,6 +18,7 @@ class Cell {
 
 	adj;
 	visited;
+	position;
 
 	constructor(i, j, vertices) {
 		this.#i = i;
@@ -23,7 +26,11 @@ class Cell {
 		this.#vertices = vertices;
 		this.adj = [true, true, true, true]; // top, right, bot, left
 		this.visited = false;
-		this.sol = false;
+		this.position = new Vector3(
+			(vertices[0].x + vertices[1].x) / 2,
+			(vertices[0].y + vertices[3].y) / 2,
+			vertices[0].z
+		);
 	}
 }
 
