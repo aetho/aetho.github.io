@@ -340,12 +340,9 @@ class Maze {
 			new THREE.Float32BufferAttribute(vertices, 3)
 		);
 		geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
-
 		geometry.computeVertexNormals();
 
-		const material = new THREE.MeshLambertMaterial({
-			vertexColors: true,
-		});
+		const material = new THREE.MeshLambertMaterial({ vertexColors: true });
 		this.#mesh = new THREE.Mesh(geometry, material);
 		this.#mesh.matrixAutoUpdate = false;
 	}

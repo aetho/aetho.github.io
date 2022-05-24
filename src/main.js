@@ -1,11 +1,14 @@
 import "./style.css";
 import * as THREE from "three";
+import Stats from "three/examples/jsm/libs/stats.module";
+import { GUI } from "dat.gui";
+import { TrackballControls } from "three/examples/jsm/controls/TrackballControls";
 import { Maze } from "./custom/objects/Maze";
 import { AStar } from "./custom/solvers/AStar";
-import Stats from "three/examples/jsm/libs/stats.module";
-import { TrackballControls } from "three/examples/jsm/controls/TrackballControls";
+import { ProgressLine } from "./custom/objects/ProgressLine";
 
 let t, scene, camera, cameraGroup, renderer, stats, controls;
+let progLine;
 
 init();
 animate();
@@ -46,32 +49,44 @@ function init() {
 
 	// Generate maze
 	const maze = new Maze(35, 35);
-
-	// Solve maze
-	const solver = new AStar(maze);
-	console.log(solver.solve(0, 35 * 35 - 1));
-
 	// Draw maze mesh
 	scene.add(maze.mesh);
+	// Solve maze
+	const solver = new AStar(maze);
+	const sol = solver.solve(0, 35 * 35 - 1);
+	const start = sol[0];
+	const goal = sol[1];
+	const parents = sol[2];
+	console.log(sol);
+
+	// Draw progress
+	const points = [];
+	let current = goal;
+	const solHeight = 0.9;
+	while (current != undefined) {
+		points.push(maze.cells[current].position.setZ(solHeight));
+		current = parents[current];
+	}
+	progLine = new ProgressLine(0x0faaf0, 0.5, ...points);
+	scene.add(progLine.mesh);
 
 	// timer
 	t = 0;
 	// stats
 	stats = new Stats();
 	document.body.appendChild(stats.dom);
-	// Control
+	// control
 	controls = new TrackballControls(camera, renderer.domElement);
+	// GUI
+	const gui = new GUI();
+	gui.add(progLine, "progress", 0, 1).name("Line progress");
 
-	// Update renderer and camera on resize
+	// update renderer and camera on resize
 	window.addEventListener("resize", handleWindowResize);
 }
 
 function animate() {
 	requestAnimationFrame(animate);
-
-	// t += 0.001;
-	// cameraGroup.rotation.z = t;
-
 	renderer.render(scene, camera);
 
 	controls.update();
