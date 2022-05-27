@@ -6,9 +6,11 @@ import { TrackballControls } from "three/examples/jsm/controls/TrackballControls
 import { Maze } from "./custom/objects/Maze";
 import { AStar } from "./custom/solvers/AStar";
 import { ProgressLine } from "./custom/objects/ProgressLine";
+import { WebGLMultipleRenderTargets } from "three";
 
-let t, scene, camera, cameraGroup, renderer, stats, controls;
+let scene, camera, cameraGroup, renderer, stats, controls;
 let progLine;
+let t, settings;
 
 init();
 animate();
@@ -53,7 +55,7 @@ function init() {
 	scene.add(maze.mesh);
 	// Solve maze
 	const solver = new AStar(maze);
-	const sol = solver.solve(0, 35 * 35 - 1);
+	const sol = solver.solve(35 * 35 - 1, 0);
 	const start = sol[0];
 	const goal = sol[1];
 	const parents = sol[2];
@@ -72,6 +74,9 @@ function init() {
 
 	// timer
 	t = 0;
+	settings = {
+		animate: true,
+	};
 	// stats
 	stats = new Stats();
 	document.body.appendChild(stats.dom);
@@ -79,18 +84,28 @@ function init() {
 	controls = new TrackballControls(camera, renderer.domElement);
 	// GUI
 	const gui = new GUI();
-	gui.add(progLine, "progress", 0, 1).name("Line progress");
+	gui.add(settings, "animate").name("Animate");
 
 	// update renderer and camera on resize
 	window.addEventListener("resize", handleWindowResize);
+	window.addEventListener("wheel", handleWheel);
 }
 
 function animate() {
 	requestAnimationFrame(animate);
 	renderer.render(scene, camera);
 
-	controls.update();
+	if (settings.animate) {
+		t += 0.005;
+		let lineProgress = progLine.points.length * Math.abs(Math.sin(t));
+		progLine.distance = lineProgress;
+	}
+
 	stats.update();
+}
+
+function handleWheel(e) {
+	// console.log(e.deltaY);
 }
 
 function handleWindowResize() {

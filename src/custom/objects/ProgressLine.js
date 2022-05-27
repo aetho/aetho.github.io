@@ -14,24 +14,43 @@ class ProgressLine {
 		return this.#mesh;
 	}
 
-	#prog;
+	#absProg;
+	get distance() {
+		return this.#absProg;
+	}
+	set distance(value) {
+		this.#absProg = value;
+		if (value > this.points.length) this.#absProg = this.points.length;
+		if (value < 0) this.#absProg = 0;
+
+		this.#relProg = this.#absProg / this.points.length;
+		this.update();
+	}
+
+	#relProg;
 	get progress() {
-		return this.#prog;
+		return this.#relProg;
 	}
 	set progress(value) {
-		this.#prog = value > 1 ? 1 : value;
-		this.#prog = value < 0 ? 0 : value;
+		this.#relProg = value;
+		if (value > 1) this.#relProg = 1;
+		if (value < 0) this.#relProg = 0;
+
+		this.#absProg = this.#relProg * this.points.length;
 		this.update();
 	}
 
 	constructor(color, lineWidth, ...points) {
 		this.points = points;
-		this.#prog = 1;
+		this.#relProg = 0;
+		this.#absProg = 0;
 		this.lineWidth = lineWidth;
 		this.#color = color;
 
 		this.init();
 		this.update();
+
+		console.log(points);
 	}
 
 	init() {
@@ -59,94 +78,22 @@ class ProgressLine {
 
 	update() {
 		// compute vertex positions
-		const m = Math.floor(this.#prog * this.points.length - 1);
 		const v = [];
-		for (let i = 0; i < m; i++) {
+
+		let fIndex = Math.floor(this.#absProg);
+		if (fIndex < 0) fIndex = 0;
+		if (fIndex > this.points.length - 1) fIndex = this.points.length - 1;
+		for (let i = 0; i < fIndex; i++) {
 			const p1 = this.points[i];
 			const p2 = this.points[i + 1];
-			const offset = this.lineWidth / 2;
+			this.#addLineBetween(p1, p2, v);
+		}
 
-			if (p2.x - p1.x > 0) {
-				// p2 is right of p1
-				v.push(
-					p1
-						.clone()
-						.setX(p1.x - offset)
-						.setY(p1.y - offset),
-					p2
-						.clone()
-						.setX(p2.x + offset)
-						.setY(p2.y - offset),
-					p2
-						.clone()
-						.setX(p2.x + offset)
-						.setY(p2.y + offset),
-					p1
-						.clone()
-						.setX(p1.x - offset)
-						.setY(p1.y + offset)
-				);
-			} else if (p2.x - p1.x < 0) {
-				// p2 is left of p1
-				v.push(
-					p2
-						.clone()
-						.setX(p2.x - offset)
-						.setY(p2.y - offset),
-					p1
-						.clone()
-						.setX(p1.x + offset)
-						.setY(p1.y - offset),
-					p1
-						.clone()
-						.setX(p1.x + offset)
-						.setY(p1.y + offset),
-					p2
-						.clone()
-						.setX(p2.x - offset)
-						.setY(p2.y + offset)
-				);
-			} else if (p2.y - p1.y > 0) {
-				// p2 above p1
-				v.push(
-					p1
-						.clone()
-						.setX(p1.x - offset)
-						.setY(p1.y - offset),
-					p1
-						.clone()
-						.setX(p1.x + offset)
-						.setY(p1.y - offset),
-					p2
-						.clone()
-						.setX(p2.x + offset)
-						.setY(p2.y + offset),
-					p2
-						.clone()
-						.setX(p2.x - offset)
-						.setY(p2.y + offset)
-				);
-			} else if (p2.y - p1.y < 0) {
-				// p2 below p1
-				v.push(
-					p2
-						.clone()
-						.setX(p2.x - offset)
-						.setY(p2.y - offset),
-					p2
-						.clone()
-						.setX(p2.x + offset)
-						.setY(p2.y - offset),
-					p1
-						.clone()
-						.setX(p1.x + offset)
-						.setY(p1.y + offset),
-					p1
-						.clone()
-						.setX(p1.x - offset)
-						.setY(p1.y + offset)
-				);
-			}
+		const part = this.#absProg - Math.floor(this.#absProg);
+		if (fIndex != this.points.length - 1 && part > 0) {
+			const p1 = this.points[fIndex];
+			const p2 = p1.clone().lerpVectors(p1, this.points[fIndex + 1], part);
+			if (p1 && p2) this.#addLineBetween(p1, p2, v);
 		}
 
 		// update mesh
@@ -173,6 +120,92 @@ class ProgressLine {
 		this.#mesh.geometry.attributes.position.needsUpdate = true; // required after the first render
 		this.#mesh.geometry.index.needsUpdate = true; // required after the first render
 		this.#mesh.geometry.computeVertexNormals();
+	}
+
+	#addLineBetween(p1, p2, v) {
+		const offset = this.lineWidth / 2;
+
+		if (p2.x - p1.x > 0) {
+			// p2 is right of p1
+			v.push(
+				p1
+					.clone()
+					.setX(p1.x - offset)
+					.setY(p1.y - offset),
+				p2
+					.clone()
+					.setX(p2.x + offset)
+					.setY(p2.y - offset),
+				p2
+					.clone()
+					.setX(p2.x + offset)
+					.setY(p2.y + offset),
+				p1
+					.clone()
+					.setX(p1.x - offset)
+					.setY(p1.y + offset)
+			);
+		} else if (p2.x - p1.x < 0) {
+			// p2 is left of p1
+			v.push(
+				p2
+					.clone()
+					.setX(p2.x - offset)
+					.setY(p2.y - offset),
+				p1
+					.clone()
+					.setX(p1.x + offset)
+					.setY(p1.y - offset),
+				p1
+					.clone()
+					.setX(p1.x + offset)
+					.setY(p1.y + offset),
+				p2
+					.clone()
+					.setX(p2.x - offset)
+					.setY(p2.y + offset)
+			);
+		} else if (p2.y - p1.y > 0) {
+			// p2 above p1
+			v.push(
+				p1
+					.clone()
+					.setX(p1.x - offset)
+					.setY(p1.y - offset),
+				p1
+					.clone()
+					.setX(p1.x + offset)
+					.setY(p1.y - offset),
+				p2
+					.clone()
+					.setX(p2.x + offset)
+					.setY(p2.y + offset),
+				p2
+					.clone()
+					.setX(p2.x - offset)
+					.setY(p2.y + offset)
+			);
+		} else if (p2.y - p1.y < 0) {
+			// p2 below p1
+			v.push(
+				p2
+					.clone()
+					.setX(p2.x - offset)
+					.setY(p2.y - offset),
+				p2
+					.clone()
+					.setX(p2.x + offset)
+					.setY(p2.y - offset),
+				p1
+					.clone()
+					.setX(p1.x + offset)
+					.setY(p1.y + offset),
+				p1
+					.clone()
+					.setX(p1.x - offset)
+					.setY(p1.y + offset)
+			);
+		}
 	}
 
 	#writeToArray(arr, startIdx, ...elements) {
