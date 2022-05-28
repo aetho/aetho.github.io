@@ -69,13 +69,13 @@ function init() {
 		points.push(maze.cells[current].position.setZ(solHeight));
 		current = parents[current];
 	}
-	progLine = new ProgressLine(0x0faaf0, 0.5, ...points);
+	progLine = new ProgressLine(0x0faaf0, 0.3, ...points);
 	scene.add(progLine.mesh);
 
 	// timer
 	t = 0;
 	settings = {
-		animate: true,
+		animate: false,
 	};
 	// stats
 	stats = new Stats();
@@ -105,7 +105,10 @@ function animate() {
 }
 
 function handleWheel(e) {
-	// console.log(e.deltaY);
+	if (settings.animate) return;
+	const distDelta = 0.3;
+	if (e.deltaY > 0) progLine.distance += distDelta;
+	if (e.deltaY < 0) progLine.distance -= distDelta;
 }
 
 function handleWindowResize() {

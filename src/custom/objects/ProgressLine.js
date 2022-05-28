@@ -20,10 +20,10 @@ class ProgressLine {
 	}
 	set distance(value) {
 		this.#absProg = value;
-		if (value > this.points.length) this.#absProg = this.points.length;
+		if (value > this.points.length - 1) this.#absProg = this.points.length - 1;
 		if (value < 0) this.#absProg = 0;
 
-		this.#relProg = this.#absProg / this.points.length;
+		this.#relProg = this.#absProg / (this.points.length - 1);
 		this.update();
 	}
 
@@ -36,7 +36,7 @@ class ProgressLine {
 		if (value > 1) this.#relProg = 1;
 		if (value < 0) this.#relProg = 0;
 
-		this.#absProg = this.#relProg * this.points.length;
+		this.#absProg = this.#relProg * (this.points.length - 1);
 		this.update();
 	}
 
@@ -49,8 +49,6 @@ class ProgressLine {
 
 		this.init();
 		this.update();
-
-		console.log(points);
 	}
 
 	init() {
@@ -81,16 +79,17 @@ class ProgressLine {
 		const v = [];
 
 		let fIndex = Math.floor(this.#absProg);
-		if (fIndex < 0) fIndex = 0;
-		if (fIndex > this.points.length - 1) fIndex = this.points.length - 1;
+		const part = this.#absProg - Math.floor(this.#absProg);
+
+		// Full segments
 		for (let i = 0; i < fIndex; i++) {
 			const p1 = this.points[i];
 			const p2 = this.points[i + 1];
 			this.#addLineBetween(p1, p2, v);
 		}
 
-		const part = this.#absProg - Math.floor(this.#absProg);
-		if (fIndex != this.points.length - 1 && part > 0) {
+		// Partial segment
+		if (part > 0) {
 			const p1 = this.points[fIndex];
 			const p2 = p1.clone().lerpVectors(p1, this.points[fIndex + 1], part);
 			if (p1 && p2) this.#addLineBetween(p1, p2, v);
