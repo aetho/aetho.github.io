@@ -2,15 +2,15 @@ import "./style.css";
 import * as THREE from "three";
 import Stats from "three/examples/jsm/libs/stats.module";
 import { GUI } from "dat.gui";
-import { TrackballControls } from "three/examples/jsm/controls/TrackballControls";
 import { Maze } from "./custom/objects/Maze";
 import { AStar } from "./custom/solvers/AStar";
 import { ProgressLine } from "./custom/objects/ProgressLine";
-import { WebGLMultipleRenderTargets } from "three";
+import { Vector3 } from "three";
 
-let scene, camera, cameraGroup, renderer, stats, controls;
+let scene, camera, cameraGroup, renderer, stats;
 let progLine;
 let t, settings;
+const camOffset = new Vector3(0, 0, 10);
 
 init();
 animate();
@@ -23,10 +23,12 @@ function init() {
 	// Camera init
 	camera = new THREE.PerspectiveCamera(
 		75, // FOV
-		window.innerWidth / window.innerHeight // Aspect
+		window.innerWidth / window.innerHeight, // Aspect
+		0.01,
+		1000
 	);
 	camera.position.setZ(30);
-	camera.position.setY(-30);
+	camera.position.setY(-10);
 	camera.lookAt(0, 0, 0);
 
 	cameraGroup = new THREE.Group();
@@ -50,13 +52,12 @@ function init() {
 	scene.add(dirLight);
 
 	// Generate maze
-	const maze = new Maze(35, 35);
+	const maze = new Maze(20, 20);
 	// Draw maze mesh
 	scene.add(maze.mesh);
 	// Solve maze
 	const solver = new AStar(maze);
-	const sol = solver.solve(35 * 35 - 1, 0);
-	const start = sol[0];
+	const sol = solver.solve(20 * 20 - 1, 0);
 	const goal = sol[1];
 	const parents = sol[2];
 	console.log(sol);
@@ -75,16 +76,14 @@ function init() {
 	// timer
 	t = 0;
 	settings = {
-		animate: false,
+		follow: true,
 	};
 	// stats
 	stats = new Stats();
 	document.body.appendChild(stats.dom);
-	// control
-	controls = new TrackballControls(camera, renderer.domElement);
 	// GUI
 	const gui = new GUI();
-	gui.add(settings, "animate").name("Animate");
+	gui.add(settings, "follow").name("Follow solution");
 
 	// update renderer and camera on resize
 	window.addEventListener("resize", handleWindowResize);
@@ -93,22 +92,26 @@ function init() {
 
 function animate() {
 	requestAnimationFrame(animate);
-	renderer.render(scene, camera);
 
-	if (settings.animate) {
-		t += 0.005;
-		let lineProgress = progLine.points.length * Math.abs(Math.sin(t));
-		progLine.distance = lineProgress;
+	t += 0.1;
+	if (settings.rotate) cameraGroup.rotation.z = 0.01 * t;
+	if (settings.follow) {
+		const shadowPos = progLine.shadowPosition;
+		const dest = shadowPos.clone().add(camOffset);
+		camera.position.lerp(dest, 0.075);
 	}
 
+	progLine.animate();
+
+	renderer.render(scene, camera);
 	stats.update();
 }
 
 function handleWheel(e) {
 	if (settings.animate) return;
-	const distDelta = 0.3;
-	if (e.deltaY > 0) progLine.distance += distDelta;
-	if (e.deltaY < 0) progLine.distance -= distDelta;
+	const distDelta = 1;
+	if (e.deltaY > 0) progLine.progress += distDelta;
+	if (e.deltaY < 0) progLine.progress -= distDelta;
 }
 
 function handleWindowResize() {

@@ -2,6 +2,7 @@ import * as THREE from "three";
 class ProgressLine {
 	points;
 	lineWidth;
+	speed;
 
 	#color;
 	get color() {
@@ -14,6 +15,20 @@ class ProgressLine {
 		return this.#mesh;
 	}
 
+	#shadow;
+	get #absShadow() {
+		return this.#shadow * (this.points.length - 1);
+	}
+	get shadowPosition() {
+		const fIndex = Math.floor(this.#absShadow);
+		const part = this.#absShadow - Math.floor(this.#absShadow);
+		const p1 = this.points[fIndex];
+		let p2 = this.points[fIndex + 1];
+		if (!p2) p2 = p1.clone();
+		const pos = p1.clone().lerp(p2, part);
+		return pos;
+	}
+
 	#absProg;
 	get distance() {
 		return this.#absProg;
@@ -24,7 +39,6 @@ class ProgressLine {
 		if (value < 0) this.#absProg = 0;
 
 		this.#relProg = this.#absProg / (this.points.length - 1);
-		this.update();
 	}
 
 	#relProg;
@@ -37,18 +51,18 @@ class ProgressLine {
 		if (value < 0) this.#relProg = 0;
 
 		this.#absProg = this.#relProg * (this.points.length - 1);
-		this.update();
 	}
 
 	constructor(color, lineWidth, ...points) {
 		this.points = points;
-		this.#relProg = 0;
-		this.#absProg = 0;
 		this.lineWidth = lineWidth;
+		this.speed = 0.003;
 		this.#color = color;
+		this.#relProg = 0.0001;
+		this.#absProg = 0.0001;
+		this.#shadow = 0;
 
 		this.init();
-		this.update();
 	}
 
 	init() {
@@ -69,8 +83,19 @@ class ProgressLine {
 
 		// mesh
 		this.#mesh = new THREE.Mesh(geometry, material);
+		this.#mesh.frustumCulled = false;
 
 		// update positions
+		this.update();
+	}
+
+	animate() {
+		if (this.#shadow < this.#relProg) this.#shadow += this.speed;
+		if (this.#shadow > this.#relProg) this.#shadow -= this.speed;
+		if (this.#shadow >= 1) this.#shadow = 1;
+		if (this.#shadow <= 0) this.#shadow = 0;
+		if (Math.abs(this.#shadow - this.#relProg) < 0.01)
+			this.#shadow = this.#relProg;
 		this.update();
 	}
 
@@ -78,8 +103,8 @@ class ProgressLine {
 		// compute vertex positions
 		const v = [];
 
-		let fIndex = Math.floor(this.#absProg);
-		const part = this.#absProg - Math.floor(this.#absProg);
+		const fIndex = Math.floor(this.#absShadow);
+		const part = this.#absShadow - Math.floor(this.#absShadow);
 
 		// Full segments
 		for (let i = 0; i < fIndex; i++) {
@@ -213,8 +238,6 @@ class ProgressLine {
 			arr[tmpIdx++] = elements[i];
 		}
 	}
-
-	// #meshBetween()
 }
 
 export { ProgressLine };
