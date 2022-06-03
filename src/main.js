@@ -11,6 +11,7 @@ let scene, camera, cameraGroup, renderer, stats;
 let progLine;
 let t, settings;
 const camOffset = new Vector3(0, 0, 10);
+const camOriginal = new Vector3(0, -10, 20);
 
 init();
 animate();
@@ -27,8 +28,7 @@ function init() {
 		0.01,
 		1000
 	);
-	camera.position.setZ(30);
-	camera.position.setY(-10);
+	camera.position.set(...camOriginal);
 	camera.lookAt(0, 0, 0);
 
 	cameraGroup = new THREE.Group();
@@ -99,6 +99,8 @@ function animate() {
 		const shadowPos = progLine.shadowPosition;
 		const dest = shadowPos.clone().add(camOffset);
 		camera.position.lerp(dest, 0.075);
+	} else {
+		camera.position.lerp(camOriginal, 0.075);
 	}
 
 	progLine.animate();
