@@ -76,7 +76,7 @@ function init() {
 	// timer
 	t = 0;
 	settings = {
-		follow: true,
+		follow: false,
 	};
 	// stats
 	stats = new Stats();
@@ -94,7 +94,6 @@ function animate() {
 	requestAnimationFrame(animate);
 
 	t += 0.1;
-	if (settings.rotate) cameraGroup.rotation.z = 0.01 * t;
 	if (settings.follow) {
 		const shadowPos = progLine.shadowPosition;
 		const dest = shadowPos.clone().add(camOffset);
