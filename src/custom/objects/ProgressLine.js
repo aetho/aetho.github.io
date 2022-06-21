@@ -19,7 +19,9 @@ class ProgressLine {
 	get #absShadow() {
 		return this.#shadow * (this.points.length - 1);
 	}
-	get shadowPosition() {
+
+	// Position of shadow
+	get position() {
 		const fIndex = Math.floor(this.#absShadow);
 		const part = this.#absShadow - Math.floor(this.#absShadow);
 		const p1 = this.points[fIndex];
@@ -56,7 +58,7 @@ class ProgressLine {
 	constructor(color, lineWidth, ...points) {
 		this.points = points;
 		this.lineWidth = lineWidth;
-		this.speed = 0.003;
+		this.speed = 0.004;
 		this.#color = color;
 		this.#relProg = 0.0001;
 		this.#absProg = 0.0001;

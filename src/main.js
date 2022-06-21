@@ -5,13 +5,13 @@ import { GUI } from "dat.gui";
 import { Maze } from "./custom/objects/Maze";
 import { AStar } from "./custom/solvers/AStar";
 import { ProgressLine } from "./custom/objects/ProgressLine";
+import { CameraFollowController } from "./custom/objects/CameraFollowController";
 import { Vector3 } from "three";
 
-let scene, camera, cameraGroup, renderer, stats;
+let scene, camera, renderer, stats;
+let camController;
 let progLine;
-let t, settings;
-const camOffset = new Vector3(0, 0, 10);
-const camOriginal = new Vector3(0, -10, 20);
+let settings;
 
 init();
 animate();
@@ -20,20 +20,18 @@ function init() {
 	// Scene init
 	scene = new THREE.Scene();
 	scene.background = new THREE.Color(0x36393f);
+	// scene.background = new THREE.Color(0xffffff);
 
 	// Camera init
 	camera = new THREE.PerspectiveCamera(
-		75, // FOV
+		30, // FOV
 		window.innerWidth / window.innerHeight, // Aspect
 		0.01,
 		1000
 	);
-	camera.position.set(...camOriginal);
+	camera.position.set(0, -20, 30);
 	camera.lookAt(0, 0, 0);
-
-	cameraGroup = new THREE.Group();
-	cameraGroup.add(camera);
-	scene.add(cameraGroup);
+	scene.add(camera);
 
 	// Renderer init
 	renderer = new THREE.WebGLRenderer({
@@ -52,12 +50,14 @@ function init() {
 	scene.add(dirLight);
 
 	// Generate maze
-	const maze = new Maze(20, 20);
+	const mapW = 20;
+	const mapH = 20;
+	const maze = new Maze(mapW, mapH);
 	// Draw maze mesh
 	scene.add(maze.mesh);
 	// Solve maze
 	const solver = new AStar(maze);
-	const sol = solver.solve(20 * 20 - 1, 0);
+	const sol = solver.solve(mapW * mapH - 1, 0);
 	const goal = sol[1];
 	const parents = sol[2];
 	console.log(sol);
@@ -71,13 +71,19 @@ function init() {
 		current = parents[current];
 	}
 	progLine = new ProgressLine(0x0faaf0, 0.3, ...points);
+	progLine.speed = 0.003;
 	scene.add(progLine.mesh);
 
-	// timer
-	t = 0;
 	settings = {
-		follow: false,
+		follow: true,
 	};
+
+	// Camera controller
+	const camBounds = [0, 0, -18, -12];
+	camController = new CameraFollowController(camera, progLine, camBounds);
+	camController.offset = new Vector3(0, -10, 20);
+	camController.speed = 0.075;
+
 	// stats
 	stats = new Stats();
 	document.body.appendChild(stats.dom);
@@ -92,18 +98,10 @@ function init() {
 
 function animate() {
 	requestAnimationFrame(animate);
-
-	t += 0.1;
-	if (settings.follow) {
-		const shadowPos = progLine.shadowPosition;
-		const dest = shadowPos.clone().add(camOffset);
-		camera.position.lerp(dest, 0.075);
-	} else {
-		camera.position.lerp(camOriginal, 0.075);
-	}
+	camController.active = settings.follow;
 
 	progLine.animate();
-
+	camController.update();
 	renderer.render(scene, camera);
 	stats.update();
 }
