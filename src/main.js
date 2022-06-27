@@ -20,7 +20,6 @@ function init() {
 	// Scene init
 	scene = new THREE.Scene();
 	scene.background = new THREE.Color(0x36393f);
-	// scene.background = new THREE.Color(0xffffff);
 
 	// Camera init
 	camera = new THREE.PerspectiveCamera(
@@ -31,6 +30,7 @@ function init() {
 	);
 	camera.position.set(0, -20, 30);
 	camera.lookAt(0, 0, 0);
+	camera.position.y -= 1.5;
 	scene.add(camera);
 
 	// Renderer init
@@ -79,10 +79,14 @@ function init() {
 	};
 
 	// Camera controller
-	const camBounds = [0, 0, -18, -12];
-	camController = new CameraFollowController(camera, progLine, camBounds);
-	camController.offset = new Vector3(0, -10, 20);
-	camController.speed = 0.075;
+	const camBounds = [150, 150];
+	camController = new CameraFollowController(
+		camera,
+		progLine,
+		camBounds,
+		renderer
+	);
+	camController.speed = 0.085;
 
 	// stats
 	stats = new Stats();
