@@ -23,7 +23,7 @@ class CameraFollowController {
 		this.renderer = renderer;
 
 		this.active = true;
-		this.speed = 0.1;
+		this.speed = 0.15;
 
 		this.#dest = new Vector3();
 		this.#canvasSize = new Vector2();
@@ -42,8 +42,6 @@ class CameraFollowController {
 				x: Math.round(targetNDC.x * halfW + halfW),
 				y: Math.round(halfH - targetNDC.y * halfH),
 			};
-
-			console.log(domXY);
 
 			const delta = 2;
 			if (domXY.x > this.width - this.bounds[0])

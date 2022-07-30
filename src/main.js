@@ -6,7 +6,6 @@ import { Maze } from "./custom/objects/Maze";
 import { AStar } from "./custom/solvers/AStar";
 import { ProgressLine } from "./custom/objects/ProgressLine";
 import { CameraFollowController } from "./custom/objects/CameraFollowController";
-import { Vector3 } from "three";
 
 let scene, camera, renderer, stats;
 let camController;
@@ -50,32 +49,35 @@ function init() {
 	scene.add(dirLight);
 
 	// Generate maze
-	const mapW = 20;
-	const mapH = 20;
+	const mapW = 16;
+	const mapH = 16;
 	const maze = new Maze(mapW, mapH);
 	// Draw maze mesh
 	scene.add(maze.mesh);
 	// Solve maze
 	const solver = new AStar(maze);
-	const sol = solver.solve(mapW * mapH - 1, 0);
+	const sol = solver.solve(mapW * (mapH / 2) + mapW / 2, 0);
+	// const sol = solver.solve(0, mapW * (mapH / 2) + mapW / 2);
 	const goal = sol[1];
 	const parents = sol[2];
-	console.log(sol);
+	// console.log(sol);
 
 	// Draw progress
 	const points = [];
 	let current = goal;
-	const solHeight = 0.9;
+	const solHeight = 1.5;
 	while (current != undefined) {
 		points.push(maze.cells[current].position.setZ(solHeight));
+		// points.push(maze.cells[current].position);
 		current = parents[current];
 	}
-	progLine = new ProgressLine(0x0faaf0, 0.3, ...points);
+	progLine = new ProgressLine(0x0faaf0, 0.2, ...points);
 	progLine.speed = 0.003;
 	scene.add(progLine.mesh);
+	scene.add(progLine.lineMesh);
 
 	settings = {
-		follow: true,
+		follow: false,
 	};
 
 	// Camera controller
@@ -86,7 +88,6 @@ function init() {
 		camBounds,
 		renderer
 	);
-	camController.speed = 0.085;
 
 	// stats
 	stats = new Stats();
