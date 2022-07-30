@@ -57,7 +57,6 @@ function init() {
 	// Solve maze
 	const solver = new AStar(maze);
 	const sol = solver.solve(mapW * (mapH / 2) + mapW / 2, 0);
-	// const sol = solver.solve(0, mapW * (mapH / 2) + mapW / 2);
 	const goal = sol[1];
 	const parents = sol[2];
 	// console.log(sol);
@@ -65,7 +64,7 @@ function init() {
 	// Draw progress
 	const points = [];
 	let current = goal;
-	const solHeight = 1.5;
+	const solHeight = 0.9;
 	while (current != undefined) {
 		points.push(maze.cells[current].position.setZ(solHeight));
 		// points.push(maze.cells[current].position);
@@ -74,10 +73,9 @@ function init() {
 	progLine = new ProgressLine(0x0faaf0, 0.2, ...points);
 	progLine.speed = 0.003;
 	scene.add(progLine.mesh);
-	scene.add(progLine.lineMesh);
 
 	settings = {
-		follow: false,
+		follow: true,
 	};
 
 	// Camera controller
