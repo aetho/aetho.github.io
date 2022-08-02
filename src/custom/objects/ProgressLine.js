@@ -87,12 +87,10 @@ class ProgressLine {
 		const geometry = new THREE.BufferGeometry();
 
 		// attributes
-		let maxPoints = (this.points.length - 1) * 24; // 24 vertices per prism
+		let maxPoints = (this.points.length - 1) * 36; // 36 vertices per prism (6 per face, not reusing vertices)
 		maxPoints = maxPoints < 0 ? 0 : maxPoints;
 		const positions = new Float32Array(maxPoints * 3); // 3 coordinates per vertex
-		// const indices = new Uint16Array(maxPoints);
 
-		// geometry.setIndex(new THREE.BufferAttribute(indices, 1));
 		geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
 
 		// material
@@ -141,7 +139,6 @@ class ProgressLine {
 
 		// update mesh
 		const positions = this.#mesh.geometry.attributes.position.array;
-		// const indices = this.#mesh.geometry.index.array;
 
 		for (let i = 0, count = 0; i < v.length; i++, count += 3) {
 			this.#writeToArray(positions, count, ...v[i].toArray());
@@ -150,7 +147,6 @@ class ProgressLine {
 		const drawCount = v.length;
 		this.#mesh.geometry.setDrawRange(0, drawCount);
 		this.#mesh.geometry.attributes.position.needsUpdate = true; // required after the first render
-		// this.#mesh.geometry.index.needsUpdate = true; // required after the first render
 		this.#mesh.geometry.computeVertexNormals();
 
 		// console.log(positions);
@@ -191,24 +187,96 @@ class ProgressLine {
 		const dx = p[1].x - p[0].x;
 		const dy = p[1].y - p[0].y;
 		const offset = this.lineWidth / 2;
+		let a, b, c, d, e, f, g, h;
 
 		if (dy == 0) {
-			const a = p[0].clone().setY(p[0].y - offset);
-			const b = p[1].clone().setY(p[1].y - offset);
-			const c = p[1].clone().setY(p[1].y + offset);
-			const d = p[0].clone().setY(p[0].y + offset);
-			v.push(a, b, d);
-			v.push(b, c, d);
+			a = p[0]
+				.clone()
+				.setY(p[0].y - offset)
+				.setZ(p[0].z + offset);
+			b = p[1]
+				.clone()
+				.setY(p[1].y - offset)
+				.setZ(p[1].z + offset);
+			c = p[1]
+				.clone()
+				.setY(p[1].y + offset)
+				.setZ(p[1].z + offset);
+			d = p[0]
+				.clone()
+				.setY(p[0].y + offset)
+				.setZ(p[0].z + offset);
+			e = p[0]
+				.clone()
+				.setY(p[0].y - offset)
+				.setZ(p[0].z - offset);
+			f = p[1]
+				.clone()
+				.setY(p[1].y - offset)
+				.setZ(p[1].z - offset);
+			g = p[1]
+				.clone()
+				.setY(p[1].y + offset)
+				.setZ(p[1].z - offset);
+			h = p[0]
+				.clone()
+				.setY(p[0].y + offset)
+				.setZ(p[0].z - offset);
 		}
 
 		if (dx == 0) {
-			const a = p[0].clone().setX(p[0].x - offset);
-			const b = p[0].clone().setX(p[0].x + offset);
-			const c = p[1].clone().setX(p[1].x + offset);
-			const d = p[1].clone().setX(p[1].x - offset);
-			v.push(a, b, d);
-			v.push(b, c, d);
+			a = p[0]
+				.clone()
+				.setX(p[0].x - offset)
+				.setZ(p[0].z + offset);
+			b = p[0]
+				.clone()
+				.setX(p[0].x + offset)
+				.setZ(p[0].z + offset);
+			c = p[1]
+				.clone()
+				.setX(p[1].x + offset)
+				.setZ(p[1].z + offset);
+			d = p[1]
+				.clone()
+				.setX(p[1].x - offset)
+				.setZ(p[1].z + offset);
+			e = p[0]
+				.clone()
+				.setX(p[0].x - offset)
+				.setZ(p[0].z - offset);
+			f = p[0]
+				.clone()
+				.setX(p[0].x + offset)
+				.setZ(p[0].z - offset);
+			g = p[1]
+				.clone()
+				.setX(p[1].x + offset)
+				.setZ(p[1].z - offset);
+			h = p[1]
+				.clone()
+				.setX(p[1].x - offset)
+				.setZ(p[1].z - offset);
 		}
+
+		// Top face
+		v.push(a, b, d);
+		v.push(b, c, d);
+		// Bot face
+		v.push(f, e, g);
+		v.push(e, h, g);
+		// Front face
+		v.push(e, f, a);
+		v.push(f, b, a);
+		// Back face
+		v.push(g, h, c);
+		v.push(h, d, c);
+		// Left face
+		v.push(f, g, b);
+		v.push(g, c, b);
+		// Right face
+		v.push(h, e, d);
+		v.push(e, a, d);
 	}
 
 	#writeToArray(arr, startIdx, ...elements) {

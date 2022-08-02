@@ -6,6 +6,7 @@ import { Maze } from "./custom/objects/Maze";
 import { AStar } from "./custom/solvers/AStar";
 import { ProgressLine } from "./custom/objects/ProgressLine";
 import { CameraFollowController } from "./custom/objects/CameraFollowController";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 let scene, camera, renderer, stats;
 let camController;
@@ -40,6 +41,9 @@ function init() {
 	renderer.setPixelRatio(window.devicePixelRatio);
 	renderer.setSize(window.innerWidth, window.innerHeight);
 
+	// Orbit controls
+	// const controls = new OrbitControls(camera, renderer.domElement);
+
 	// Global Lights
 	const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
 	scene.add(ambientLight);
@@ -59,19 +63,17 @@ function init() {
 	const sol = solver.solve(mapW * (mapH / 2) + mapW / 2, 0);
 	const goal = sol[1];
 	const parents = sol[2];
-	// console.log(sol);
 
 	// Draw progress
 	const points = [];
 	let current = goal;
-	const solHeight = 0.9;
+	const solHeight = 0.8;
 	while (current != undefined) {
 		points.push(maze.cells[current].position.setZ(solHeight));
-		// points.push(maze.cells[current].position);
 		current = parents[current];
 	}
-	progLine = new ProgressLine(0x0faaf0, 0.2, ...points);
-	progLine.speed = 0.003;
+	progLine = new ProgressLine(0x0faaf0, 0.3, ...points);
+	progLine.speed = 0.005;
 	scene.add(progLine.mesh);
 
 	settings = {
