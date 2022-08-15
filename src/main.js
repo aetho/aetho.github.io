@@ -73,7 +73,6 @@ function init() {
 		current = parents[current];
 	}
 	progLine = new ProgressLine(0x0faaf0, 0.3, ...points);
-	progLine.speed = 0.005;
 	scene.add(progLine.mesh);
 
 	settings = {
@@ -95,6 +94,7 @@ function init() {
 	// GUI
 	const gui = new GUI();
 	gui.add(settings, "follow").name("Follow solution");
+	gui.add(progLine, "active").name("Solution visible");
 
 	// update renderer and camera on resize
 	window.addEventListener("resize", handleWindowResize);

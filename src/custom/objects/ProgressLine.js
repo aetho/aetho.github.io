@@ -1,5 +1,6 @@
 import * as THREE from "three";
 class ProgressLine {
+	active;
 	points;
 	lineWidth;
 	speed;
@@ -14,7 +15,7 @@ class ProgressLine {
 
 	#mesh;
 	get mesh() {
-		this.update();
+		this.#update();
 		return this.#mesh;
 	}
 
@@ -23,7 +24,6 @@ class ProgressLine {
 		const p = [];
 		for (let i = 0; i < this.#segStart.length; i++) {
 			p.push(this.#segStart[i], this.#segEnd[i]);
-			// p.push(this.#segStart[i], this.#segEnd[i]);
 		}
 
 		const geometry = new THREE.BufferGeometry().setFromPoints(p);
@@ -71,9 +71,10 @@ class ProgressLine {
 	}
 
 	constructor(color, lineWidth, ...points) {
+		this.active = true;
 		this.points = points;
 		this.lineWidth = lineWidth;
-		this.speed = 0.004;
+		this.speed = 0.005;
 		this.#color = color;
 		this.#relProg = 0;
 		this.#absProg = 0;
@@ -95,29 +96,35 @@ class ProgressLine {
 
 		// material
 		const material = new THREE.MeshLambertMaterial({ color: this.#color });
+		// const material = new THREE.MeshStandardMaterial({ color: this.#color });
 
 		// mesh
 		this.#mesh = new THREE.Mesh(geometry, material);
+		this.#mesh.material.transparent = true;
 		this.#mesh.frustumCulled = false;
 
 		// compute segments
 		this.#computeSegments();
 
 		// update positions
-		this.update();
+		this.#update();
 	}
 
 	animate() {
+		this.#mesh.material.opacity += this.active ? 0.03 : -0.03;
+		if (this.#mesh.material.opacity < 0) this.#mesh.material.opacity = 0;
+		if (this.#mesh.material.opacity > 1) this.#mesh.material.opacity = 1;
+
 		if (this.#shadow < this.#relProg) this.#shadow += this.speed;
 		if (this.#shadow > this.#relProg) this.#shadow -= this.speed;
-		if (this.#shadow >= 1) this.#shadow = 1;
-		if (this.#shadow <= 0) this.#shadow = 0;
-		if (Math.abs(this.#shadow - this.#relProg) < 0.01)
+		if (this.#shadow > 1) this.#shadow = 1;
+		if (this.#shadow < 0) this.#shadow = 0;
+		if (Math.abs(this.#shadow - this.#relProg) < this.speed)
 			this.#shadow = this.#relProg;
-		this.update();
+		this.#update();
 	}
 
-	update() {
+	#update() {
 		const v = [];
 		const fIndex = Math.floor(this.#absShadow);
 		const part = this.#absShadow - Math.floor(this.#absShadow);
