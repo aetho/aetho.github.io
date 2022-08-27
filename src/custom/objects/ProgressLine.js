@@ -114,6 +114,9 @@ class ProgressLine {
 		this.#mesh.material.opacity += this.active ? 0.03 : -0.03;
 		if (this.#mesh.material.opacity < 0) this.#mesh.material.opacity = 0;
 		if (this.#mesh.material.opacity > 1) this.#mesh.material.opacity = 1;
+		// Do not update mesh if opacity !== 1
+		if (this.#mesh.material.opacity !== 1) return;
+		this.#mesh.visible = this.#mesh.material.opacity !== 0;
 
 		if (this.#shadow < this.#relProg) this.#shadow += this.speed;
 		if (this.#shadow > this.#relProg) this.#shadow -= this.speed;
@@ -121,6 +124,7 @@ class ProgressLine {
 		if (this.#shadow < 0) this.#shadow = 0;
 		if (Math.abs(this.#shadow - this.#relProg) < this.speed)
 			this.#shadow = this.#relProg;
+
 		this.#update();
 	}
 
@@ -155,8 +159,6 @@ class ProgressLine {
 		this.#mesh.geometry.setDrawRange(0, drawCount);
 		this.#mesh.geometry.attributes.position.needsUpdate = true; // required after the first render
 		this.#mesh.geometry.computeVertexNormals();
-
-		// console.log(positions);
 	}
 
 	#computeSegments() {

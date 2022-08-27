@@ -10,8 +10,11 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 let scene, camera, renderer, stats;
 let camController;
-let progLine;
 let settings;
+let pageProgress = 0;
+const checkpoints = [];
+const solutions = [];
+const colours = [0xa66cff, 0x9c9efe, 0x0afb4ff, 0xb1e1ff].reverse();
 
 init();
 animate();
@@ -58,22 +61,8 @@ function init() {
 	const maze = new Maze(mapW, mapH);
 	// Draw maze mesh
 	scene.add(maze.mesh);
-	// Solve maze
+	// Initiate A* solver
 	const solver = new AStar(maze);
-	const sol = solver.solve(mapW * (mapH / 2) + mapW / 2, 0);
-	const goal = sol[1];
-	const parents = sol[2];
-
-	// Draw progress
-	const points = [];
-	let current = goal;
-	const solHeight = 0.8;
-	while (current != undefined) {
-		points.push(maze.cells[current].position.setZ(solHeight));
-		current = parents[current];
-	}
-	progLine = new ProgressLine(0x0faaf0, 0.3, ...points);
-	scene.add(progLine.mesh);
 
 	settings = {
 		follow: true,
@@ -83,10 +72,28 @@ function init() {
 	const camBounds = [150, 150];
 	camController = new CameraFollowController(
 		camera,
-		progLine,
+		new THREE.Object3D(),
 		camBounds,
 		renderer
 	);
+
+	// Set checkpoints
+	checkpoints.push(mapW * (mapH / 2) + mapW / 2); // center
+	checkpoints.push(0); // bot left
+	checkpoints.push(mapW - 1); // bot right
+	checkpoints.push(mapW * mapH - 1); // top right
+	checkpoints.push(mapW * (mapH - 1)); // top left
+	// Initialize progress lines between checkpoints
+	for (let i = 0; i < checkpoints.length - 1; i++) {
+		const sol = solver
+			.solve(checkpoints[i], checkpoints[i + 1])
+			.map((el) => el.setZ(0.8 + i * 0.01));
+		solutions.push(new ProgressLine(colours[i], 0.2 + i * 0.01, ...sol));
+	}
+
+	for (let i = 0; i < solutions.length; i++) {
+		scene.add(solutions[i].mesh);
+	}
 
 	// stats
 	stats = new Stats();
@@ -94,7 +101,6 @@ function init() {
 	// GUI
 	const gui = new GUI();
 	gui.add(settings, "follow").name("Follow solution");
-	gui.add(progLine, "active").name("Solution visible");
 
 	// update renderer and camera on resize
 	window.addEventListener("resize", handleWindowResize);
@@ -103,19 +109,32 @@ function init() {
 
 function animate() {
 	requestAnimationFrame(animate);
-	camController.active = settings.follow;
+	solutions.forEach((el) => el.animate());
 
-	progLine.animate();
+	camController.active = settings.follow;
 	camController.update();
 	renderer.render(scene, camera);
 	stats.update();
 }
 
 function handleWheel(e) {
-	if (settings.animate) return;
 	const distDelta = 1;
-	if (e.deltaY > 0) progLine.progress += distDelta;
-	if (e.deltaY < 0) progLine.progress -= distDelta;
+	if (e.deltaY > 0) {
+		pageProgress += distDelta;
+		if (pageProgress <= 0) pageProgress = 0;
+		if (pageProgress >= solutions.length) pageProgress = solutions.length;
+		camController.target = solutions[pageProgress - 1];
+	}
+	if (e.deltaY < 0) {
+		pageProgress -= distDelta;
+		if (pageProgress <= 0) pageProgress = 0;
+		if (pageProgress >= solutions.length) pageProgress = solutions.length;
+		camController.target = solutions[pageProgress];
+	}
+
+	for (let i = 0; i < solutions.length; i++) {
+		solutions[i].progress = i === pageProgress - 1 ? 1 : 0;
+	}
 }
 
 function handleWindowResize() {

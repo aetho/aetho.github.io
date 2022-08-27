@@ -27,7 +27,7 @@ class AStar {
 
 		while (!openSet.isEmpty()) {
 			let cur = openSet.pop();
-			if (cur === goal) return [start, goal, parents];
+			if (cur === goal) return this.#getSolutionPositions(goal, parents);
 
 			closedSet.push(cur);
 
@@ -51,6 +51,16 @@ class AStar {
 				}
 			}
 		}
+	}
+
+	#getSolutionPositions(goal, solution) {
+		const points = [];
+		let current = goal;
+		while (current != undefined) {
+			points.push(this.#cells[current].position);
+			current = solution[current];
+		}
+		return points;
 	}
 
 	#h(start, goal) {
