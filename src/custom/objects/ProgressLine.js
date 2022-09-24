@@ -74,7 +74,7 @@ class ProgressLine {
 		this.active = true;
 		this.points = points;
 		this.lineWidth = lineWidth;
-		this.speed = 0.005;
+		this.speed = 0.05;
 		this.#color = color;
 		this.#relProg = 0;
 		this.#absProg = 0;

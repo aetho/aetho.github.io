@@ -13,8 +13,10 @@ let camController;
 let settings;
 let pageProgress = 0;
 const checkpoints = [];
-const solutions = [];
 const colours = [0xa66cff, 0x9c9efe, 0x0afb4ff, 0xb1e1ff].reverse();
+let maze;
+let solver;
+let lineBetween;
 
 init();
 animate();
@@ -58,14 +60,15 @@ function init() {
 	// Generate maze
 	const mapW = 16;
 	const mapH = 16;
-	const maze = new Maze(mapW, mapH);
+	// const maze = new Maze(mapW, mapH);
+	maze = new Maze(mapW, mapH);
 	// Draw maze mesh
 	scene.add(maze.mesh);
 	// Initiate A* solver
-	const solver = new AStar(maze);
+	solver = new AStar(maze);
 
 	settings = {
-		follow: true,
+		follow: false,
 	};
 
 	// Camera controller
@@ -78,22 +81,14 @@ function init() {
 	);
 
 	// Set checkpoints
-	checkpoints.push(mapW * (mapH / 2) + mapW / 2); // center
+	// checkpoints.push(mapW * (mapH / 2) + mapW / 2); // center
 	checkpoints.push(0); // bot left
 	checkpoints.push(mapW - 1); // bot right
 	checkpoints.push(mapW * mapH - 1); // top right
 	checkpoints.push(mapW * (mapH - 1)); // top left
-	// Initialize progress lines between checkpoints
-	for (let i = 0; i < checkpoints.length - 1; i++) {
-		const sol = solver
-			.solve(checkpoints[i], checkpoints[i + 1])
-			.map((el) => el.setZ(0.8 + i * 0.01));
-		solutions.push(new ProgressLine(colours[i], 0.2 + i * 0.01, ...sol));
-	}
 
-	for (let i = 0; i < solutions.length; i++) {
-		scene.add(solutions[i].mesh);
-	}
+	lineBetween = new ProgressLine(0xa66cff, 0.3);
+	scene.add(lineBetween.mesh);
 
 	// stats
 	stats = new Stats();
@@ -109,7 +104,7 @@ function init() {
 
 function animate() {
 	requestAnimationFrame(animate);
-	solutions.forEach((el) => el.animate());
+	lineBetween.animate();
 
 	camController.active = settings.follow;
 	camController.update();
@@ -118,23 +113,20 @@ function animate() {
 }
 
 function handleWheel(e) {
-	const distDelta = 1;
-	if (e.deltaY > 0) {
-		pageProgress += distDelta;
-		if (pageProgress <= 0) pageProgress = 0;
-		if (pageProgress >= solutions.length) pageProgress = solutions.length;
-		camController.target = solutions[pageProgress - 1];
-	}
-	if (e.deltaY < 0) {
-		pageProgress -= distDelta;
-		if (pageProgress <= 0) pageProgress = 0;
-		if (pageProgress >= solutions.length) pageProgress = solutions.length;
-		camController.target = solutions[pageProgress];
-	}
+	const prevProg = pageProgress;
+	pageProgress = (pageProgress + 1 * Math.sign(e.deltaY)) % checkpoints.length;
+	if (pageProgress < 0) pageProgress = checkpoints.length - 1;
 
-	for (let i = 0; i < solutions.length; i++) {
-		solutions[i].progress = i === pageProgress - 1 ? 1 : 0;
-	}
+	const sol = solver
+		.solve(checkpoints[prevProg], checkpoints[pageProgress])
+		.map((el) => el.setZ(0.8));
+
+	scene.remove(lineBetween.mesh);
+	lineBetween = new ProgressLine(colours[pageProgress], 0.3, ...sol);
+	lineBetween.progress = 1;
+	scene.add(lineBetween.mesh);
+
+	camController.target = maze.cells[checkpoints[pageProgress]];
 }
 
 function handleWindowResize() {
