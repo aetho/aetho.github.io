@@ -7,14 +7,21 @@ class Maze {
 	get mapWidth() {
 		return this.#mapWidth;
 	}
+	set mapWidth(value) {
+		this.#mapWidth = value <= 0 ? 1 : value;
+		this.generate();
+	}
 
 	#mapHeight;
 	get mapHeight() {
 		return this.#mapHeight;
 	}
+	set mapHeight(value) {
+		this.#mapHeight = value <= 0 ? 1 : value;
+		this.generate();
+	}
 
 	#vertices;
-
 	#cells;
 	get cells() {
 		return this.#cells;
@@ -25,9 +32,56 @@ class Maze {
 		return this.#mesh;
 	}
 
-	constructor(mapWidth, mapHeight) {
+	#wallHeight;
+	get wallHeight() {
+		return this.#wallHeight;
+	}
+	set wallHeight(value) {
+		this.#wallHeight = value < 0 ? 0 : value;
+		this.#generateMesh();
+	}
+
+	#wallWidth;
+	get wallWidth() {
+		return this.#wallWidth;
+	}
+	set wallWidth(value) {
+		this.#wallWidth = value < 0 ? 0 : value;
+		this.#generateMesh();
+	}
+
+	#wallColour;
+	get wallColour() {
+		return this.#wallColour;
+	}
+	set wallColour(value) {
+		this.#wallColour = value;
+		this.#generateMesh();
+	}
+
+	#floorColour;
+	get floorColour() {
+		return this.#floorColour;
+	}
+	set floorColour(value) {
+		this.#floorColour = value;
+		this.#generateMesh();
+	}
+
+	constructor(
+		mapWidth,
+		mapHeight,
+		wallHeight = 1,
+		wallWidth = 0.2,
+		wallColour = 0xffffff,
+		floorColour = 0x4b4b4b
+	) {
 		this.#mapWidth = mapWidth;
 		this.#mapHeight = mapHeight;
+		this.#wallHeight = wallHeight;
+		this.#wallWidth = wallWidth;
+		this.#wallColour = wallColour;
+		this.#floorColour = floorColour;
 		this.generate();
 	}
 
@@ -134,19 +188,14 @@ class Maze {
 		}
 	}
 
-	#generateMesh(
-		wallHeight = 1,
-		wallWidth = 0.5,
-		wallColor = [1, 1, 1],
-		floorColor = [0.5, 0.5, 0.5]
-	) {
+	#generateMesh() {
 		const geometry = new THREE.BufferGeometry();
 
 		const indices = [];
 		const vertices = [];
 		const colors = [];
 
-		const halfWidth = wallWidth / 2;
+		const halfWidth = this.#wallWidth / 2;
 
 		/**
 		 * Extrudes a given quad in the positive z-direction
@@ -200,7 +249,9 @@ class Maze {
 				vertices.push(...v[face.v[2]].toArray());
 				vertices.push(...v[face.v[3]].toArray());
 
-				colors.push(...color, ...color, ...color, ...color);
+				const tmpCol = new THREE.Color(color);
+				const tmpRBG = [tmpCol.r, tmpCol.g, tmpCol.b];
+				colors.push(...tmpRBG, ...tmpRBG, ...tmpRBG, ...tmpRBG);
 
 				indices.push(a, c, b);
 				indices.push(c, a, d);
@@ -214,7 +265,7 @@ class Maze {
 			new THREE.Vector3(this.#mapWidth / 2, -this.#mapHeight / 2, -0.001),
 			new THREE.Vector3(-this.#mapWidth / 2, -this.#mapHeight / 2, -0.001),
 		];
-		AddQuadPrism(v, 0.001, floorColor);
+		AddQuadPrism(v, 0.001, this.#floorColour);
 
 		// Maze vertices
 		for (let n = 0; n < this.#vertices.length; n++) {
@@ -237,7 +288,7 @@ class Maze {
 					.setX(current.x - halfWidth)
 					.setY(current.y - halfWidth),
 			];
-			AddQuadPrism(v, wallHeight, wallColor);
+			AddQuadPrism(v, this.#wallHeight, this.#wallColour);
 		}
 
 		// Maze walls
@@ -267,7 +318,7 @@ class Maze {
 						.setX(topLeft.x + halfWidth)
 						.setY(topLeft.y - halfWidth),
 				];
-				AddQuadPrism(v, wallHeight, wallColor);
+				AddQuadPrism(v, this.#wallHeight, this.#wallColour);
 			}
 			if (current.adj[1]) {
 				const v = [
@@ -288,7 +339,7 @@ class Maze {
 						.setX(botRight.x - halfWidth)
 						.setY(botRight.y + halfWidth),
 				];
-				AddQuadPrism(v, wallHeight, wallColor);
+				AddQuadPrism(v, this.#wallHeight, this.#wallColour);
 			}
 			if (current.adj[2]) {
 				const v = [
@@ -309,7 +360,7 @@ class Maze {
 						.setX(botLeft.x + halfWidth)
 						.setY(botLeft.y - halfWidth),
 				];
-				AddQuadPrism(v, wallHeight, wallColor);
+				AddQuadPrism(v, this.#wallHeight, this.#wallColour);
 			}
 			if (current.adj[3]) {
 				const v = [
@@ -330,7 +381,7 @@ class Maze {
 						.setX(botLeft.x - halfWidth)
 						.setY(botLeft.y + halfWidth),
 				];
-				AddQuadPrism(v, wallHeight, wallColor);
+				AddQuadPrism(v, this.#wallHeight, this.#wallColour);
 			}
 		}
 
@@ -373,6 +424,10 @@ class Maze {
 			neighbors.push(left);
 
 		return neighbors;
+	}
+
+	coord2idx(x, y) {
+		return y * this.mapWidth + x;
 	}
 }
 
