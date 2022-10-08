@@ -125,9 +125,9 @@ function init() {
 	raycaster = new THREE.Raycaster();
 
 	// Orbit controls
-	const controls = new OrbitControls(camera, renderer.domElement);
-	controls.enableZoom = false;
-	controls.enableRotate = false;
+	// const controls = new OrbitControls(camera, renderer.domElement);
+	// controls.enableZoom = false;
+	// controls.enableRotate = false;
 
 	// stats
 	stats = new Stats();
