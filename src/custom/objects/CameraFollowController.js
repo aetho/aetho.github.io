@@ -53,7 +53,7 @@ class CameraFollowController {
 			if (domXY.y < this.bounds[1])
 				this.#dest.addVectors(this.camera.position, new Vector3(0, delta, 0));
 
-			this.#dest.setZ(15);
+			this.#dest.setZ(25);
 			this.camera.position.lerp(this.#dest, this.speed);
 		} else {
 			this.camera.position.lerp(this.origin, this.speed);

@@ -95,8 +95,7 @@ class ProgressLine {
 		geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
 
 		// material
-		const material = new THREE.MeshLambertMaterial({ color: this.#color });
-		// const material = new THREE.MeshStandardMaterial({ color: this.#color });
+		const material = new THREE.MeshStandardMaterial({ color: this.#color });
 
 		// mesh
 		this.#mesh = new THREE.Mesh(geometry, material);

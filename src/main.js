@@ -7,17 +7,38 @@ import { AStar } from "./custom/solvers/AStar";
 import { ProgressLine } from "./custom/objects/ProgressLine";
 import { CameraFollowController } from "./custom/objects/CameraFollowController";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { SpecialCube } from "./custom/objects/SpecialCube";
 
-let scene, camera, renderer, stats;
-let camController;
-let settings;
+let canvasDOM, scene, camera, renderer, stats;
+let camContainer;
 let pageProgress = 0;
+const colours = [0xa66cff, 0x9c9efe, 0x0afb4ff, 0xb1e1ff];
 const checkpoints = [];
-const colours = [0xa66cff, 0x9c9efe, 0x0afb4ff, 0xb1e1ff].reverse();
+
 let maze;
 let solver;
 let lineBetween;
+let cubes = [];
 
+let pointer = { x: 0, y: 0 };
+let raycaster;
+let INTERSECTED;
+
+let settings = {
+	camSpeed: 0.15,
+	mazeWidth: 16,
+	mazeHeight: 16,
+	wallHeight: 0.4,
+	wallWidth: 0.2,
+	wallColour: 0xffffff,
+	floorColour: 0x4b4b4b,
+	lineWidth: 0.2,
+	lineHeight: 0.3,
+	lineColour: colours[2],
+	cubeSize: 0.5,
+	cubeColour: colours[0],
+	cubeSpeed: 0.05,
+};
 init();
 animate();
 
@@ -33,21 +54,22 @@ function init() {
 		0.01,
 		1000
 	);
-	camera.position.set(0, -20, 30);
+	camera.position.set(0, -30, 35);
 	camera.lookAt(0, 0, 0);
-	camera.position.y -= 1.5;
-	scene.add(camera);
+
+	camContainer = new THREE.Object3D();
+	camContainer.add(camera);
+	scene.add(camContainer);
+	// scene.add(camera);
 
 	// Renderer init
+	canvasDOM = document.querySelector("#app");
 	renderer = new THREE.WebGLRenderer({
-		canvas: document.querySelector("#app"),
+		canvas: canvasDOM,
 		antialias: true,
 	});
 	renderer.setPixelRatio(window.devicePixelRatio);
 	renderer.setSize(window.innerWidth, window.innerHeight);
-
-	// Orbit controls
-	// const controls = new OrbitControls(camera, renderer.domElement);
 
 	// Global Lights
 	const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
@@ -58,58 +80,112 @@ function init() {
 	scene.add(dirLight);
 
 	// Generate maze
-	const mapW = 16;
-	const mapH = 16;
-	// const maze = new Maze(mapW, mapH);
-	maze = new Maze(mapW, mapH);
+	maze = new Maze(
+		settings.mazeWidth,
+		settings.mazeHeight,
+		settings.wallHeight,
+		settings.wallWidth,
+		settings.wallColour,
+		settings.floorColour
+	);
 	// Draw maze mesh
 	scene.add(maze.mesh);
 	// Initiate A* solver
 	solver = new AStar(maze);
 
-	settings = {
-		follow: false,
-	};
-
-	// Camera controller
-	const camBounds = [150, 150];
-	camController = new CameraFollowController(
-		camera,
-		new THREE.Object3D(),
-		camBounds,
-		renderer
-	);
-
 	// Set checkpoints
-	// checkpoints.push(mapW * (mapH / 2) + mapW / 2); // center
-	checkpoints.push(0); // bot left
-	checkpoints.push(mapW - 1); // bot right
-	checkpoints.push(mapW * mapH - 1); // top right
-	checkpoints.push(mapW * (mapH - 1)); // top left
+	const mapW = settings.mazeWidth;
+	const mapH = settings.mazeHeight;
+	checkpoints.push(maze.coord2idx(0, 0)); // bot left
+	checkpoints.push(maze.coord2idx(mapW - 1, 0)); // bot right
+	checkpoints.push(maze.coord2idx(mapW - 1, mapH - 1)); // top right
+	checkpoints.push(maze.coord2idx(0, mapH - 1)); // top left
 
-	lineBetween = new ProgressLine(0xa66cff, 0.3);
+	lineBetween = new ProgressLine(settings.lineColour, settings.lineWidth);
 	scene.add(lineBetween.mesh);
+
+	// Checkpoint Cubes
+	for (let i = 0; i < checkpoints.length; i++) {
+		const cube = new SpecialCube(
+			settings.cubeSize,
+			settings.cubeColour,
+			settings.cubeSpeed
+		);
+		cube.position = maze.cells[checkpoints[i]].position.clone();
+		cube.position.setZ(0.5);
+		cube.mesh.rotation.x = Math.random() * 100;
+		cube.mesh.rotation.y = Math.random() * 100;
+		cube.mesh.rotation.z = Math.random() * 100;
+
+		cubes.push(cube);
+		scene.add(cubes[i].mesh);
+	}
+
+	// Raycast
+	raycaster = new THREE.Raycaster();
+
+	// Orbit controls
+	const controls = new OrbitControls(camera, renderer.domElement);
+	controls.enableZoom = false;
+	controls.enableRotate = false;
 
 	// stats
 	stats = new Stats();
 	document.body.appendChild(stats.dom);
 	// GUI
 	const gui = new GUI();
-	gui.add(settings, "follow").name("Follow solution");
+	const keys = Object.keys(settings);
+	console.log(keys);
+	console.log(settings);
+	for (let i = 0; i < keys.length; i++) {
+		console.log(i);
+		gui.add(settings, keys[i]).name(keys[i]);
+	}
 
-	// update renderer and camera on resize
-	window.addEventListener("resize", handleWindowResize);
+	window.addEventListener("mousemove", handlePointerMove);
 	window.addEventListener("wheel", handleWheel);
+	window.addEventListener("resize", handleWindowResize);
 }
 
-function animate() {
+function animate(time) {
 	requestAnimationFrame(animate);
-	lineBetween.animate();
+	time *= 0.001;
 
-	camController.active = settings.follow;
-	camController.update();
+	camContainer.rotation.z = time * settings.camSpeed;
+	lineBetween.animate();
+	for (let i = 0; i < cubes.length; i++) cubes[i].animate();
+
+	raycaster.setFromCamera(pointer, camera);
+	const intersects = raycaster
+		.intersectObjects(scene.children, false)
+		.filter((el) => el.object.name == "SpecialCube");
+
+	if (intersects.length > 0) {
+		if (INTERSECTED != intersects[0].object) {
+			if (INTERSECTED)
+				INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+
+			INTERSECTED = intersects[0].object;
+			INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
+			INTERSECTED.material.emissive.setHex(0x333333);
+		}
+	} else {
+		if (INTERSECTED)
+			INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+
+		INTERSECTED = null;
+	}
+
+	if (INTERSECTED) canvasDOM.style.cursor = "pointer";
+	else canvasDOM.style.cursor = "initial";
+
 	renderer.render(scene, camera);
 	stats.update();
+}
+
+function handlePointerMove(e) {
+	pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+	pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
 }
 
 function handleWheel(e) {
@@ -117,16 +193,17 @@ function handleWheel(e) {
 	pageProgress = (pageProgress + 1 * Math.sign(e.deltaY)) % checkpoints.length;
 	if (pageProgress < 0) pageProgress = checkpoints.length - 1;
 
-	const sol = solver
-		.solve(checkpoints[prevProg], checkpoints[pageProgress])
-		.map((el) => el.setZ(0.8));
+	const sol = solver.solve(checkpoints[prevProg], checkpoints[pageProgress]);
 
 	scene.remove(lineBetween.mesh);
-	lineBetween = new ProgressLine(colours[pageProgress], 0.3, ...sol);
+	lineBetween = new ProgressLine(
+		settings.lineColour,
+		settings.lineWidth,
+		...sol
+	);
 	lineBetween.progress = 1;
+	lineBetween.mesh.position.z += settings.lineHeight;
 	scene.add(lineBetween.mesh);
-
-	camController.target = maze.cells[checkpoints[pageProgress]];
 }
 
 function handleWindowResize() {
