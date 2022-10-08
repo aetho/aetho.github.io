@@ -25,15 +25,15 @@ let raycaster;
 let INTERSECTED;
 
 let settings = {
-	camSpeed: 0.15,
+	camSpeed: 0.1,
 	mazeWidth: 16,
 	mazeHeight: 16,
-	wallHeight: 0.4,
+	wallHeight: 0.2,
 	wallWidth: 0.2,
 	wallColour: 0xffffff,
 	floorColour: 0x4b4b4b,
 	lineWidth: 0.2,
-	lineHeight: 0.3,
+	lineHeight: 0.1,
 	lineColour: colours[2],
 	cubeSize: 0.5,
 	cubeColour: colours[0],
@@ -54,7 +54,7 @@ function init() {
 		0.01,
 		1000
 	);
-	camera.position.set(0, -30, 35);
+	camera.position.set(0, -30, 25);
 	camera.lookAt(0, 0, 0);
 
 	camContainer = new THREE.Object3D();
@@ -134,13 +134,7 @@ function init() {
 	document.body.appendChild(stats.dom);
 	// GUI
 	const gui = new GUI();
-	const keys = Object.keys(settings);
-	console.log(keys);
-	console.log(settings);
-	for (let i = 0; i < keys.length; i++) {
-		console.log(i);
-		gui.add(settings, keys[i]).name(keys[i]);
-	}
+	gui.add(settings, "camSpeed").name("Camera Speed");
 
 	window.addEventListener("mousemove", handlePointerMove);
 	window.addEventListener("wheel", handleWheel);
@@ -167,11 +161,15 @@ function animate(time) {
 
 			INTERSECTED = intersects[0].object;
 			INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
+			INTERSECTED.currentScale = INTERSECTED.scale.clone();
 			INTERSECTED.material.emissive.setHex(0x333333);
+			INTERSECTED.scale.set(1.5, 1.5, 1.5);
 		}
 	} else {
-		if (INTERSECTED)
+		if (INTERSECTED) {
 			INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+			INTERSECTED.scale.copy(INTERSECTED.currentScale);
+		}
 
 		INTERSECTED = null;
 	}
