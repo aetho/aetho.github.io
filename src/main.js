@@ -5,9 +5,9 @@ import { GUI } from "dat.gui";
 import { Maze } from "./custom/objects/Maze";
 import { AStar } from "./custom/solvers/AStar";
 import { ProgressLine } from "./custom/objects/ProgressLine";
-import { CameraFollowController } from "./custom/objects/CameraFollowController";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { SpecialCube } from "./custom/objects/SpecialCube";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
 
 let canvasDOM, scene, camera, renderer, stats;
 let camContainer;
@@ -39,6 +39,10 @@ let settings = {
 	cubeColour: colours[0],
 	cubeSpeed: 0.05,
 };
+
+let renderScene;
+let composer;
+
 init();
 animate();
 
@@ -60,7 +64,6 @@ function init() {
 	camContainer = new THREE.Object3D();
 	camContainer.add(camera);
 	scene.add(camContainer);
-	// scene.add(camera);
 
 	// Renderer init
 	canvasDOM = document.querySelector("#app");
@@ -70,6 +73,10 @@ function init() {
 	});
 	renderer.setPixelRatio(window.devicePixelRatio);
 	renderer.setSize(window.innerWidth, window.innerHeight);
+
+	renderScene = new RenderPass(scene, camera);
+	composer = new EffectComposer(renderer);
+	composer.addPass(renderScene);
 
 	// Global Lights
 	const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
@@ -124,11 +131,6 @@ function init() {
 	// Raycast
 	raycaster = new THREE.Raycaster();
 
-	// Orbit controls
-	// const controls = new OrbitControls(camera, renderer.domElement);
-	// controls.enableZoom = false;
-	// controls.enableRotate = false;
-
 	// stats
 	stats = new Stats();
 	document.body.appendChild(stats.dom);
@@ -177,7 +179,8 @@ function animate(time) {
 	if (INTERSECTED) canvasDOM.style.cursor = "pointer";
 	else canvasDOM.style.cursor = "initial";
 
-	renderer.render(scene, camera);
+	// renderer.render(scene, camera);
+	composer.render();
 	stats.update();
 }
 
@@ -192,7 +195,6 @@ function handleWheel(e) {
 	if (pageProgress < 0) pageProgress = checkpoints.length - 1;
 
 	const sol = solver.solve(checkpoints[prevProg], checkpoints[pageProgress]);
-
 	scene.remove(lineBetween.mesh);
 	lineBetween = new ProgressLine(
 		settings.lineColour,
