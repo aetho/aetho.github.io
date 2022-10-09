@@ -118,7 +118,6 @@ class SpecialCube {
 	}
 
 	animate() {
-		this.#mesh.rotation.x += this.#speed;
 		this.#mesh.rotation.y += this.#speed;
 		this.#mesh.rotation.z += this.#speed;
 	}
